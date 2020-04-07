@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Http;
 
-use Branch\Interfaces\ResponseFactoryInterface;
+use Branch\Interfaces\Http\ResponseFactoryInterface;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Psr\Http\Message\ResponseInterface;
 

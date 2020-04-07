@@ -1,5 +1,5 @@
 <?php
-namespace Branch\Interfaces;
+namespace Branch\Interfaces\Http;
 
 use Psr\Http\Message\ServerRequestInterface;
 

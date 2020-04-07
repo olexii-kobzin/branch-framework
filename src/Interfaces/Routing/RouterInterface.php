@@ -1,5 +1,5 @@
 <?php
-namespace Branch\Interfaces;
+namespace Branch\Interfaces\Routing;
 
 interface RouterInterface
 {

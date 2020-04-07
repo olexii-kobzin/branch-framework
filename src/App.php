@@ -3,8 +3,9 @@ declare(strict_types=1);
 
 namespace Branch;
 
-use Branch\Interfaces\ContainerInterface;
-use Branch\Interfaces\RouterInterface;
+use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Interfaces\Routing\RouterInterface;
+use Branch\Container\Container;
 
 class App
 {
@@ -23,7 +24,7 @@ class App
 
     public function init()
     {
-        $this->container = new DiContainer();
+        $this->container = new Container();
         $this->container->build();
         $router = $this->container->get(RouterInterface::class);
         $router->init();

@@ -2,7 +2,7 @@
 
 use Branch\App;
 use Branch\Interfaces\ConfigInterface;
-use Branch\Interfaces\RouterInterface;
+use Branch\Interfaces\Routing\RouterInterface;
 
 if (!function_exists('app')) {
     function app() {

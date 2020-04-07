@@ -1,5 +1,5 @@
 <?php
-namespace Branch\Interfaces;
+namespace Branch\Interfaces\Container;
 
 use Psr\Container\ContainerInterface as PsrContainerInterface;
 
