@@ -71,7 +71,12 @@ class Container implements ContainerInterface
         return $this->builder->buildObject($definition, $default);
     }
 
-    // TODO: move invoke to Invoker when sufficient functionality
+    public function buildObject(string $class, array $default = []): object
+    {
+        return $this->builder->buildObject(['class' => $class], $default);
+    }
+
+    // TODO: move invoke to Invoker when sufficient amount of functionality
     public function invoke(callable $callable): void
     {
         $reflection = $this->prepareInvoke($callable);
@@ -90,6 +95,9 @@ class Container implements ContainerInterface
         } else if (is_object($callable)) {
             $reflection = new ReflectionMethod($callable, '__invoke');
         } else if (is_array($callable)) {
+            if (is_string($callable[0])) {
+                $callable[0] = $this->buildObject($callable[0]);
+            }
             $reflection = new ReflectionMethod($callable[0], $callable[1]);
         }
 

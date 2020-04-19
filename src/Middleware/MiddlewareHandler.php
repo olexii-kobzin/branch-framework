@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Middleware;
 
-use Branch\Interfaces\MiddlewareHandlerInterface;
+use Branch\Interfaces\Middleware\MiddlewareHandlerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;

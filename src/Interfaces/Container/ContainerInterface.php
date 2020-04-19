@@ -13,4 +13,6 @@ interface ContainerInterface extends PsrContainerInterface
     public function invoke(callable $callable): void ;
 
     public function build(): void;
+
+    public function buildObject(string $class): object;
 }

@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Branch\Container;
 
 use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
+use Closure;
 use LogicException;
 use ReflectionClass;
 
@@ -20,14 +22,18 @@ class Builder
     {
         $built = null;
 
-        if (is_object($definition)) {
+        if ($definition instanceof Closure) {
+            $built = call_user_func($definition, $this->container);
+        } else if (is_object($definition)) {
             $built = $definition;
-        } else if (is_callable($definition)) {
-            $built = $definition($this);
-        } else if (is_array($definition) && $definition['type'] === ContainerInterface::DI_TYPE_SINGLETON) {
-            $built = $this->buildObject($definition);
+        } else if (is_array($definition)) {
+            if ($definition['type'] === ContainerInterface::DI_TYPE_SINGLETON) {
+                $built = $this->buildObject($definition);
+            } else {
+                $built = $definition;
+            }
         }
-
+        
         return $built;
     }
 

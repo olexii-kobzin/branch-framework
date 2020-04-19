@@ -3,15 +3,29 @@ declare(strict_types=1);
 
 namespace Branch\Routing;
 
+use Exception;
 use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Interfaces\Http\RequestFactoryInterface;
+use Branch\Interfaces\Http\ResponseFactoryInterface;
+use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
 use Fig\Http\Message\RequestMethodInterface;
+use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\ResponseInterface;
 
 class Router implements RouterInterface, RequestMethodInterface
 {
-    protected string $path = '../routes/index.php';
+    protected string $configPath = '../routes/index.php';
 
     protected ContainerInterface $container;
+
+    protected RouteInvokerInterface $invoker;
+
+    protected ServerRequestInterface $request;
+
+    protected ResponseInterface $response;
+
+    protected string $path = '';
 
     protected $config;
 
@@ -19,24 +33,36 @@ class Router implements RouterInterface, RequestMethodInterface
 
     protected array $routes = [];
 
-    public function __construct(ContainerInterface $container)
+    protected array $args = [];
+
+    public function __construct(
+        ContainerInterface $container,
+        RouteInvokerInterface $invoker,
+        ServerRequestInterface $request,
+        ResponseInterface $response
+    )
     {
         $this->container = $container;
-
-        $this->config = require realpath($this->path);
+        $this->invoker = $invoker;
+        $this->request = $request;
+        $this->response = $response;
+        $this->path = $this->request->getUri()->getPath();
+        $this->config = require realpath($this->configPath);
     }
 
     public function init(): void
     {
         $this->container->invoke($this->config);
 
-        var_dump($this->routes);
+        $matchedRoute = $this->matchRoute();
+
+        $this->invoker->invoke($matchedRoute, $this->args);
     }
 
     public function group(array $config, $handler): void
     {
         $end = $this->getGroupStackEnd();
-        $this->groupStack[] = RouteCollector::mergeConifg($end, $config);
+        $this->groupStack[] = RouteCollector::getGroupConfig($end, $config);
 
         $this->container->invoke($handler);
 
@@ -49,13 +75,40 @@ class Router implements RouterInterface, RequestMethodInterface
 
         $config['handler'] = $handler;
 
-        $this->routes[] = RouteCollector::mergeConifg($end, $config);
+        $this->routes[] = RouteCollector::getRouteConfig($end, $config);
     }
 
-    protected function getGroupStackEnd()
+    protected function getGroupStackEnd(): array
     {
         $end = end($this->groupStack);
 
         return $end ? $end : [];
     }
+
+    protected function matchRoute(): array
+    {
+        $match = [];
+
+        foreach ($this->routes as $route) {
+            $matchedParams = [];
+            if (preg_match($route['pattern'], trim($this->path, '/'), $matchedParams)) {
+                $match = $route; 
+                $this->args = $this->filterMatchedParams($matchedParams);
+                break;
+            }
+        }
+
+        if (!$match) {
+            // TODO: Create Http exceptions
+            throw new Exception("Route {$this->path} not found", 404);
+        }
+
+        return $match;
+    }
+
+    protected function filterMatchedParams($matchedParams)
+    {
+        return array_filter($matchedParams, 'is_string', ARRAY_FILTER_USE_KEY);
+    }
+    
 }

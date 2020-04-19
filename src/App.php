@@ -11,6 +11,8 @@ class App
 {
     protected static ?self $instance = null;
 
+    protected ContainerInterface $container;
+
     protected function __construct() {}
 
     public static function getInstance(): self
@@ -26,6 +28,7 @@ class App
     {
         $this->container = new Container();
         $this->container->build();
+
         $router = $this->container->get(RouterInterface::class);
         $router->init();
 
