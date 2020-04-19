@@ -7,12 +7,14 @@ use Exception;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
-use Fig\Http\Message\RequestMethodInterface;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Fig\Http\Message\RequestMethodInterface;
+use Fig\Http\Message\StatusCodeInterface;
+use Fig\Http\Message\StatusCodeInterfacel;
 
-class Router implements RouterInterface, RequestMethodInterface
+class Router implements RouterInterface, RequestMethodInterface, StatusCodeInterface
 {
     protected string $configPath = '../routes/index.php';
 
@@ -51,13 +53,15 @@ class Router implements RouterInterface, RequestMethodInterface
         $this->emitter = $emitter;
         $this->path = $this->request->getUri()->getPath();
         $this->config = require realpath($this->configPath);
-    }
+    }  
 
     public function init(): void
     {
         $this->container->invoke($this->config);
 
         $matchedRoute = $this->matchRoute();
+
+        $this->validateMethod($matchedRoute['methods']);
 
         $response = $this->invoker->invoke($matchedRoute, $this->args);
 
@@ -77,11 +81,57 @@ class Router implements RouterInterface, RequestMethodInterface
 
     public function get(array $config, $handler): void
     {
+        $this->map([self::METHOD_GET], $config, $handler);
+    }
+
+    public function post(array $config, $handler): void
+    {
+        $this->map([self::METHOD_POST], $config, $handler);
+    }
+
+    public function put(array $config, $handler): void
+    {
+        $this->map([self::METHOD_PUT], $config, $handler);
+    }
+
+    public function patch(array $config, $handler): void
+    {
+        $this->map([self::METHOD_PATCH], $config, $handler);
+    }
+
+    public function delete(array $config, $handler): void
+    {
+        $this->map([self::METHOD_DELETE], $config, $handler);
+    }
+
+    public function options(array $config, $handler): void
+    {
+        $this->map([self::METHOD_OPTIONS], $config, $handler);
+    }
+
+    public function any(array $config, $handler): void
+    {
+        $this->map([], $config, $handler);
+    }
+
+    public function map(array $methods, array $config, $handler): void
+    {
         $end = $this->getGroupStackEnd();
 
         $config['handler'] = $handler;
+        $config['methods'] = $methods;
 
         $this->routes[] = RouteCollectorHelper::getRouteConfig($end, $config);
+    }
+
+    protected function validateMethod(array $methods): void
+    {
+        $requestMethod = $this->request->getMethod();
+        
+        if ($methods && !in_array($requestMethod, $methods)) {
+            // TODO: add http exception
+            throw new Exception('Method not allowed', StatusCodeInterface::STATUS_METHOD_NOT_ALLOWED);
+        }
     }
 
     protected function getGroupStackEnd(): array
