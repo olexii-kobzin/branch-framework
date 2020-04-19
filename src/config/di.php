@@ -9,12 +9,16 @@ use Branch\Interfaces\Middleware\MiddlewareHandlerInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
 use Branch\Interfaces\Http\RequestFactoryInterface;
 use Branch\Interfaces\Http\ResponseFactoryInterface;
+use Branch\Interfaces\Middleware\CallbackActionInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
+use Branch\Middleware\CallbackAction;
 use Branch\Middleware\MiddlewareHandler;
 use Branch\Middleware\MiddlewarePipe;
 use Branch\Routing\RouteInvoker;
 use Branch\Routing\Router;
+use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
+use Laminas\HttpHandlerRunner\Emitter\SapiStreamEmitter;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -50,6 +54,10 @@ return [
         'class' => MiddlewareHandler::class,
         'type' => ContainerInterface::DI_TYPE_INSTANCE,
     ],
+    EmitterInterface::class => [
+        'class' => SapiStreamEmitter::class,
+        'type' => ContainerInterface::DI_TYPE_INSTANCE,
+    ],
     RouteInvokerInterface::class => [
         'class' => RouteInvoker::class,
         'type' => ContainerInterface::DI_TYPE_SINGLETON,
@@ -57,5 +65,9 @@ return [
     RouterInterface::class => [
         'class' => Router::class,
         'type' => ContainerInterface::DI_TYPE_SINGLETON,
+    ],
+    CallbackActionInterface::class => [
+        'class' => CallbackAction::class,
+        'type' => ContainerInterface::DI_TYPE_INSTANCE,
     ],
 ];

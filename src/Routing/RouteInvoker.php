@@ -4,9 +4,12 @@ namespace Branch\Routing;
 
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Middleware\ActionInterface;
+use Branch\Interfaces\Middleware\CallbackActionInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
+use Closure;
 use Exception;
+use InvalidArgumentException;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -20,14 +23,14 @@ class RouteInvoker implements RouteInvokerInterface
 
     protected MiddlewarePipeInterface $pipe;
 
-    protected array $middleware;
+    protected array $middleware = [];
 
     protected string $path;
 
     public function __construct(
         ContainerInterface $container,
         ServerRequestInterface $request,
-        ResponseInterface $response,
+        ResponseInterface $response, 
         MiddlewarePipeInterface $pipe
     )
     {
@@ -43,12 +46,12 @@ class RouteInvoker implements RouteInvokerInterface
 
         $this->buildMiddleware($config['middleware'] ?? []);
 
-        $handler = $this->buildHandler($config['handler']);
-        $handler->setArgs($args);
+        $action = $this->build($config['handler']);
+        $action->setArgs($args);
 
         $this->buildChain();
 
-        return $this->pipe->process($this->request, $handler);
+        return $this->pipe->process($this->request, $action);
     }
 
     protected function buildMiddleware(array $middleware): void
@@ -64,6 +67,21 @@ class RouteInvoker implements RouteInvokerInterface
         }
     }
 
+    protected function build($handler): ActionInterface
+    {
+        $action = null;
+
+        if ($handler instanceof Closure) {
+            $action = $this->buildCallback($handler);
+        } else if (is_string($handler)) {
+            $action = $this->buildAction($handler);
+        } else {
+            throw new InvalidArgumentException('Handler type is not recognized');
+        }
+
+        return $action;
+    }
+
     protected function buildChain(): void
     {
         foreach ($this->middleware as $middleware) {
@@ -71,41 +89,18 @@ class RouteInvoker implements RouteInvokerInterface
         }
     }
 
-    protected function buildHandler(callable $handler)
+    protected function buildCallback(callable $handler)
     {
-        return new class($this->response, $handler) implements ActionInterface {
-            
-            private ResponseInterface $response;
+        $callbackAction = $this->container->get(CallbackActionInterface::class);
+        $callbackAction->setHandler($handler);
 
-            private $handler;
-
-            private array $args = [];
-
-            public function __construct(ResponseInterface $response, callable $handler)
-            {
-                $this->response = $response;
-                $this->handler = $handler;
-            }
-
-            public function handle(ServerRequestInterface $request): ResponseInterface
-            {
-                return $this->run($request, $this->response, $this->args);
-            }
-
-            public function run(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface
-            {
-                return call_user_func($this->handler, $request, $response, $args);
-            }
-
-            public function setArgs(array $args): void
-            {
-                $this->args = $args;
-            }
-        };
+        return $callbackAction;
     }
 
-    // protected function invokeAction(callable $handler, array $middleware)
-    // {
+    protected function buildAction(string $action)
+    {
+        $action = $this->container->buildObject($action);
 
-    // }
+        return $action;
+    }
 }

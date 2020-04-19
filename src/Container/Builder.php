@@ -69,8 +69,14 @@ class Builder
             $type = $parameter->getType();
 
             if ($type) {
+                $typeName = $type->getName();
+
+                if (!$this->container->has($typeName) && $parameter->isDefaultValueAvailable()) {
+                    continue;
+                }
+
                 $arguments[] = $this->container->get($type->getName());
-            } else if (!$type && !$parameter->isDefaultValueAvailable()) {
+            } else {
                 throw new LogicException("No type available for \"$name\" }");
             }
         }

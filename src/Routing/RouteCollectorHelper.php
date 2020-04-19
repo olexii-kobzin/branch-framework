@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Routing;
 
-class RouteCollector
+class RouteCollectorHelper
 {
     public static function getGroupConfig(array $end, array $config): array
     {

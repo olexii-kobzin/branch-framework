@@ -5,11 +5,10 @@ namespace Branch\Routing;
 
 use Exception;
 use Branch\Interfaces\Container\ContainerInterface;
-use Branch\Interfaces\Http\RequestFactoryInterface;
-use Branch\Interfaces\Http\ResponseFactoryInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
 use Fig\Http\Message\RequestMethodInterface;
+use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
@@ -25,6 +24,8 @@ class Router implements RouterInterface, RequestMethodInterface
 
     protected ResponseInterface $response;
 
+    protected EmitterInterface $emitter;
+
     protected string $path = '';
 
     protected $config;
@@ -39,13 +40,15 @@ class Router implements RouterInterface, RequestMethodInterface
         ContainerInterface $container,
         RouteInvokerInterface $invoker,
         ServerRequestInterface $request,
-        ResponseInterface $response
+        ResponseInterface $response,
+        EmitterInterface $emitter
     )
     {
         $this->container = $container;
         $this->invoker = $invoker;
         $this->request = $request;
         $this->response = $response;
+        $this->emitter = $emitter;
         $this->path = $this->request->getUri()->getPath();
         $this->config = require realpath($this->configPath);
     }
@@ -56,13 +59,16 @@ class Router implements RouterInterface, RequestMethodInterface
 
         $matchedRoute = $this->matchRoute();
 
-        $this->invoker->invoke($matchedRoute, $this->args);
+        $response = $this->invoker->invoke($matchedRoute, $this->args);
+
+        $this->emitter->emit($response);
     }
 
     public function group(array $config, $handler): void
     {
         $end = $this->getGroupStackEnd();
-        $this->groupStack[] = RouteCollector::getGroupConfig($end, $config);
+
+        $this->groupStack[] = RouteCollectorHelper::getGroupConfig($end, $config);
 
         $this->container->invoke($handler);
 
@@ -75,7 +81,7 @@ class Router implements RouterInterface, RequestMethodInterface
 
         $config['handler'] = $handler;
 
-        $this->routes[] = RouteCollector::getRouteConfig($end, $config);
+        $this->routes[] = RouteCollectorHelper::getRouteConfig($end, $config);
     }
 
     protected function getGroupStackEnd(): array
