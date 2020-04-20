@@ -18,28 +18,24 @@ class Builder
         $this->container = $container;
     }
 
-    public function buildDefinition($definition)
+    public function build($config, array $default = [])
     {
         $built = null;
 
-        if ($definition instanceof Closure) {
-            $built = call_user_func($definition, $this->container);
-        } else if (is_object($definition)) {
-            $built = $definition;
-        } else if (is_array($definition)) {
-            if ($definition['type'] === ContainerInterface::DI_TYPE_SINGLETON) {
-                $built = $this->buildObject($definition);
-            } else {
-                $built = $definition;
-            }
+        if ($config instanceof Closure) {
+            $built = call_user_func($config, $this->container);
+        } else if (is_object($config)) {
+            $built = $config;
+        } else if (is_array($config)) {
+            $built = $this->buildObject($config, $default);
         }
         
         return $built;
     }
 
-    public function buildObject(array $definition, array $default = []): object
+    public function buildObject(array $config, array $default = []): object
     {
-        $reflectionClass = new ReflectionClass($definition['class']);
+        $reflectionClass = new ReflectionClass($config['class']);
         // TODO: check for fallback to parent constructor
         $constructor = $reflectionClass->getConstructor();
         if (!$constructor) {
@@ -48,7 +44,7 @@ class Builder
 
         $arguments = $this->buildArguments(
             $constructor->getParameters(),
-            isset($definition['parameters']) ? array_merge($definition['parameters'], $default) : $default
+            isset($config['parameters']) ? array_merge($config['parameters'], $default) : $default
         );
         
         return $reflectionClass->newInstanceArgs($arguments);
@@ -71,7 +67,7 @@ class Builder
             if ($type) {
                 $typeName = $type->getName();
 
-                if (!$this->container->has($typeName) && $parameter->isDefaultValueAvailable()) {
+                if (!$this->container->configHas($typeName) && $parameter->isDefaultValueAvailable()) {
                     continue;
                 }
 

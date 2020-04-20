@@ -25,30 +25,28 @@ class Container implements ContainerInterface
 
     public function __construct()
     {
+        $this->builder = new Builder($this);
+
         $config = require realpath($this->configPath);
 
         $defaultConfig = require realpath($this->configPathDefault);
 
         $this->config = array_merge($defaultConfig, $config);
 
-        $this->builder = new Builder($this);
-    }
-
-    public function build(): void
-    {
         $this->register(ContainerInterface::class, $this);
-
-        foreach ($this->config as $id => $config) {
-            $this->definitions[$id] = $this->builder->buildDefinition($config);
-        }
     }
 
-    public function register(string $id, $definition): void
+    public function register(string $id, $config): void
     {
-        if ($this->has($id)) {
-            throw new LogicException("Definition \"$id\" is already registered");
+        if ($this->configHas($id)) {
+            throw new LogicException("Item \"$id\" is already registered");
         }
-        $this->definitions[$id] = $this->builder->buildDefinition($definition);
+        $this->config[$id] = $config;
+    }
+
+    public function configHas(string $id)
+    {
+        return isset($this->config[$id]);
     }
 
     public function has($id)
@@ -58,17 +56,23 @@ class Container implements ContainerInterface
 
     public function get($id, array $default = [])
     {
-        if (!$this->has($id)) {
-            throw new OutOfBoundsException("Definition \"$id\" is not registered");
+        if ($this->has($id)) {
+            return $this->definitions[$id];
         }
 
-        $definition = $this->definitions[$id];
-
-        if (is_object($definition)) {
-            return $definition;
+        if (!$this->configHas($id)) {
+            throw new OutOfBoundsException("Item \"$id\" is not registered");
         }
 
-        return $this->builder->buildObject($definition, $default);
+        $config = $this->config[$id];
+
+        $built = $this->builder->build($config, $default);
+
+        if (!$this->isTransient($config)) {
+            $this->definitions[$id] = $built;
+        }
+
+        return $built;
     }
 
     public function buildObject(string $class, array $default = []): object
@@ -108,4 +112,9 @@ class Container implements ContainerInterface
         return $reflection;
     }
 
+    protected function isTransient($config)
+    {
+        return is_array($config) 
+            && $config['type'] === self::DI_TYPE_TRANSIENT;
+    }
 }

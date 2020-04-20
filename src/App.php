@@ -27,7 +27,6 @@ class App
     public function init()
     {
         $this->container = new Container();
-        $this->container->build();
 
         $router = $this->container->get(RouterInterface::class);
         $router->init();

@@ -46,18 +46,6 @@ return [
 
         return $factory->create();
     },
-    MiddlewarePipeInterface::class => [
-        'class' => MiddlewarePipe::class,
-        'type' => ContainerInterface::DI_TYPE_INSTANCE,
-    ],
-    MiddlewareHandlerInterface::class => [
-        'class' => MiddlewareHandler::class,
-        'type' => ContainerInterface::DI_TYPE_INSTANCE,
-    ],
-    EmitterInterface::class => [
-        'class' => SapiStreamEmitter::class,
-        'type' => ContainerInterface::DI_TYPE_INSTANCE,
-    ],
     RouteInvokerInterface::class => [
         'class' => RouteInvoker::class,
         'type' => ContainerInterface::DI_TYPE_SINGLETON,
@@ -66,8 +54,20 @@ return [
         'class' => Router::class,
         'type' => ContainerInterface::DI_TYPE_SINGLETON,
     ],
+    MiddlewarePipeInterface::class => [
+        'class' => MiddlewarePipe::class,
+        'type' => ContainerInterface::DI_TYPE_TRANSIENT,
+    ],
+    MiddlewareHandlerInterface::class => [
+        'class' => MiddlewareHandler::class,
+        'type' => ContainerInterface::DI_TYPE_TRANSIENT,
+    ],
+    EmitterInterface::class => [
+        'class' => SapiStreamEmitter::class,
+        'type' => ContainerInterface::DI_TYPE_TRANSIENT,
+    ],
     CallbackActionInterface::class => [
         'class' => CallbackAction::class,
-        'type' => ContainerInterface::DI_TYPE_INSTANCE,
+        'type' => ContainerInterface::DI_TYPE_TRANSIENT,
     ],
 ];
