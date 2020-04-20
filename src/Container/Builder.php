@@ -18,7 +18,7 @@ class Builder
         $this->container = $container;
     }
 
-    public function build($config, array $default = [])
+    public function build($config)
     {
         $built = null;
 
@@ -27,13 +27,13 @@ class Builder
         } else if (is_object($config)) {
             $built = $config;
         } else if (is_array($config)) {
-            $built = $this->buildObject($config, $default);
+            $built = $this->buildObject($config);
         }
         
         return $built;
     }
 
-    public function buildObject(array $config, array $default = []): object
+    public function buildObject(array $config): object
     {
         $reflectionClass = new ReflectionClass($config['class']);
         // TODO: check for fallback to parent constructor
@@ -44,7 +44,7 @@ class Builder
 
         $arguments = $this->buildArguments(
             $constructor->getParameters(),
-            isset($config['parameters']) ? array_merge($config['parameters'], $default) : $default
+            $config['parameters'] ?? []
         );
         
         return $reflectionClass->newInstanceArgs($arguments);

@@ -10,7 +10,9 @@ interface ContainerInterface extends PsrContainerInterface
 
     public function register(string $name, $component): void;
 
+    public function configHas(string $id): bool;
+
     public function invoke(callable $callable): void ;
 
-    public function buildObject(string $class): object;
+    public function buildObject(string $class, array $parameters = []): object;
 }

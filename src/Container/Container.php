@@ -44,7 +44,7 @@ class Container implements ContainerInterface
         $this->config[$id] = $config;
     }
 
-    public function configHas(string $id)
+    public function configHas(string $id): bool
     {
         return isset($this->config[$id]);
     }
@@ -54,7 +54,7 @@ class Container implements ContainerInterface
         return isset($this->definitions[$id]);
     }
 
-    public function get($id, array $default = [])
+    public function get($id)
     {
         if ($this->has($id)) {
             return $this->definitions[$id];
@@ -66,7 +66,7 @@ class Container implements ContainerInterface
 
         $config = $this->config[$id];
 
-        $built = $this->builder->build($config, $default);
+        $built = $this->builder->build($config);
 
         if (!$this->isTransient($config)) {
             $this->definitions[$id] = $built;
@@ -75,9 +75,12 @@ class Container implements ContainerInterface
         return $built;
     }
 
-    public function buildObject(string $class, array $default = []): object
+    public function buildObject(string $class, array $parameters = []): object
     {
-        return $this->builder->buildObject(['class' => $class], $default);
+        return $this->builder->buildObject([
+            'class' => $class,
+            'parameters' => $parameters,
+        ]);
     }
 
     // TODO: move invoke to Invoker when sufficient amount of functionality
@@ -100,7 +103,7 @@ class Container implements ContainerInterface
             $reflection = new ReflectionMethod($callable, '__invoke');
         } else if (is_array($callable)) {
             if (is_string($callable[0])) {
-                $callable[0] = $this->buildObject($callable[0]);
+                $callable[0] = $this->builder->build($callable[0]);
             }
             $reflection = new ReflectionMethod($callable[0], $callable[1]);
         }
