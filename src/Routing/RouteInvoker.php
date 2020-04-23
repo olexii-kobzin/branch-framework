@@ -7,11 +7,11 @@ use Branch\Interfaces\Middleware\ActionInterface;
 use Branch\Interfaces\Middleware\CallbackActionInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 use Closure;
 use Exception;
 use InvalidArgumentException;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 
 class RouteInvoker implements RouteInvokerInterface
 {
@@ -22,6 +22,12 @@ class RouteInvoker implements RouteInvokerInterface
     protected ResponseInterface $response;
 
     protected MiddlewarePipeInterface $pipe;
+
+    protected string $defaultConfigPath = __DIR__ . '/../config/middleware.php';
+
+    protected string $configPath = '../config/middleware.php';
+
+    protected array $defaultMiddlewareConfig = [];
 
     protected array $middleware = [];
 
@@ -38,15 +44,22 @@ class RouteInvoker implements RouteInvokerInterface
         $this->request = $request;
         $this->response = $response;
         $this->pipe = $pipe;
+
+        $config = require realpath($this->configPath);
+        $defaultConfig = require realpath($this->defaultConfigPath);
+        $this->defaultMiddlewareConfig = array_merge($defaultConfig, $config);
     }
 
     public function invoke(array $config, array $args): ResponseInterface
     {
         $this->path = $config['path'];
 
-        $this->buildMiddleware($config['middleware'] ?? []);
+        $this->buildMiddleware(array_merge(
+            $this->defaultMiddlewareConfig,
+            $config['middleware'] ?? []
+        ));
 
-        $action = $this->build($config['handler']);
+        $action = $this->buildHandler($config['handler']);
         $action->setArgs($args);
 
         $this->buildChain();
@@ -67,7 +80,7 @@ class RouteInvoker implements RouteInvokerInterface
         }
     }
 
-    protected function build($handler): ActionInterface
+    protected function buildHandler($handler): ActionInterface
     {
         $action = null;
 

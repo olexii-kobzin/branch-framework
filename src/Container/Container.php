@@ -15,7 +15,7 @@ class Container implements ContainerInterface
 {
     protected string $configPath = '../config/di.php';
     
-    protected string $configPathDefault = __DIR__ . '/../config/di.php';
+    protected string $defaultConfigPath = __DIR__ . '/../config/di.php';
 
     protected array $config = [];
 
@@ -28,9 +28,7 @@ class Container implements ContainerInterface
         $this->builder = new Builder($this);
 
         $config = require realpath($this->configPath);
-
-        $defaultConfig = require realpath($this->configPathDefault);
-
+        $defaultConfig = require realpath($this->defaultConfigPath);
         $this->config = array_merge($defaultConfig, $config);
 
         $this->register(ContainerInterface::class, $this);
@@ -102,10 +100,10 @@ class Container implements ContainerInterface
         } else if (is_object($callable)) {
             $reflection = new ReflectionMethod($callable, '__invoke');
         } else if (is_array($callable)) {
-            if (is_string($callable[0])) {
-                $callable[0] = $this->builder->build($callable[0]);
-            }
-            $reflection = new ReflectionMethod($callable[0], $callable[1]);
+            [$config, $method] = $callable;
+            $object = $this->builder->build($config);
+
+            $reflection = new ReflectionMethod($object, $method);
         }
 
         if (!$reflection) {

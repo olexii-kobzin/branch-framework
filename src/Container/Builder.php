@@ -6,6 +6,7 @@ namespace Branch\Container;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
 use Closure;
+use InvalidArgumentException;
 use LogicException;
 use ReflectionClass;
 
@@ -28,6 +29,10 @@ class Builder
             $built = $config;
         } else if (is_array($config)) {
             $built = $this->buildObject($config);
+        } else if (is_string($config)) {
+            $built = $this->buildObject(['class' => $config]);
+        } else {
+            throw new InvalidArgumentException('Config is not recognized');
         }
         
         return $built;
