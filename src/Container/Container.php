@@ -4,118 +4,114 @@ declare(strict_types=1);
 namespace Branch\Container;
 
 use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Container\DefinitionHelper;
+use Adbar\Dot;
 use LogicException;
 use OutOfBoundsException;
-use ReflectionFunction;
-use ReflectionFunctionAbstract;
-use ReflectionMethod;
-use Closure;
+use Exception;
 
 class Container implements ContainerInterface
 {
-    protected string $configPath = '../config/di.php';
-    
-    protected string $defaultConfigPath = __DIR__ . '/../config/di.php';
+    protected Dot $definitions;
 
-    protected array $config = [];
+    protected Dot $entriesResolved;
 
-    protected array $definitions = [];
+    protected array $entriesBeingResolved = [];
 
-    protected Builder $builder;
+    protected Resolver $resolver;
+
+    protected Invoker $invoker;
 
     public function __construct()
     {
-        $this->builder = new Builder($this);
+        $this->definitions = new Dot();
+        $this->entriesResolved = new Dot();
 
-        $config = require realpath($this->configPath);
-        $defaultConfig = require realpath($this->defaultConfigPath);
-        $this->config = array_merge($defaultConfig, $config);
-
-        $this->register(ContainerInterface::class, $this);
-    }
-
-    public function register(string $id, $config): void
-    {
-        if ($this->configHas($id)) {
-            throw new LogicException("Item \"$id\" is already registered");
-        }
-        $this->config[$id] = $config;
-    }
-
-    public function configHas(string $id): bool
-    {
-        return isset($this->config[$id]);
+        // TODO: move to App::boostrap after definitions load
+        $this->resolver = new Resolver($this);
+        $this->invoker = new Invoker($this->resolver);
     }
 
     public function has($id)
     {
-        return isset($this->definitions[$id]);
+        return $this->definitions->has($id);
     }
 
     public function get($id)
     {
-        if ($this->has($id)) {
-            return $this->definitions[$id];
+        if (!$this->has($id)) {
+            throw new OutOfBoundsException("Definition '$id' was not found");
         }
 
-        if (!$this->configHas($id)) {
-            throw new OutOfBoundsException("Item \"$id\" is not registered");
+        if ($this->isDefinitionIdResolvable($id) && !$this->hasResolved($id)) {
+            $resolved = $this->resolveDefinition($id, $this->definitions->get($id));
+
+            if (!DefinitionHelper::isTransient($this->definitions->get($id))) {
+                $this->entriesResolved->set($id, $resolved);
+            }
+        } else {
+            $resolved = $this->isDefinitionIdResolvable($id)
+                ? $this->entriesResolved->get($id)
+                : $this->definitions->get($id);
         }
 
-        $config = $this->config[$id];
-
-        $built = $this->builder->build($config);
-
-        if (!$this->isTransient($config)) {
-            $this->definitions[$id] = $built;
-        }
-
-        return $built;
+        return $resolved;
     }
 
-    public function buildObject(string $class, array $parameters = []): object
+    public function set(string $id, $definition, bool $replace = true): void
     {
-        return $this->builder->buildObject([
+        if (!$replace && $this->has($id)) {
+            throw new LogicException("Definition '$id' already present");
+        }
+
+        $this->definitions->set($id, $definition);
+    }
+
+    public function setMultiple(array $definitions, bool $replace = true): void
+    {
+        foreach ($definitions as $id => $definition) {
+            $this->set($id, $definition, $replace);
+        }
+    }
+
+    public function make(string $class, array $args = []): object
+    {
+        return $this->resolveDefinition($class, [
             'class' => $class,
-            'parameters' => $parameters,
+            'args' => $args,
         ]);
     }
 
-    // TODO: move invoke to Invoker when sufficient amount of functionality
-    public function invoke(callable $callable): void
+    public function invoke(callable $callable, array $args = [])
     {
-        $reflection = $this->prepareInvoke($callable);
-
-        $arguments = $this->builder->buildArguments($reflection->getParameters());
-
-        $reflection->invokeArgs($arguments);
+        return $this->invoker->invoke($callable, $args);
     }
 
-    public function prepareInvoke(callable $callable): ReflectionFunctionAbstract
+    protected function hasResolved(string $id): bool
     {
-        $reflection = null;
-
-        if ($callable instanceof Closure) {
-            $reflection = new ReflectionFunction($callable);
-        } else if (is_object($callable)) {
-            $reflection = new ReflectionMethod($callable, '__invoke');
-        } else if (is_array($callable)) {
-            [$config, $method] = $callable;
-            $object = $this->builder->build($config);
-
-            $reflection = new ReflectionMethod($object, $method);
-        }
-
-        if (!$reflection) {
-            throw new LogicException('Unknown callable reflection');
-        }
-
-        return $reflection;
+        return $this->entriesResolved->has($id);
     }
 
-    protected function isTransient($config)
+    protected function resolveDefinition(string $id, $definition)
     {
-        return is_array($config) 
-            && $config['type'] === self::DI_TYPE_TRANSIENT;
+        if (isset($this->entriesBeingResolved[$id])) {
+            // TODO: replace with specialized exception
+            throw new Exception("Circular dependency detected while trying to resolve '$id'");
+        }
+
+        $this->entriesBeingResolved[$id] = true;
+
+        try {
+            $value = $this->resolver->resolve($definition);
+        } finally {
+            unset($this->entriesBeingResolved[$id]);
+        }
+
+        return $value;
+    }
+
+    protected function isDefinitionIdResolvable($id)
+    {
+        return strpos($id, '.') === false;
     }
 }

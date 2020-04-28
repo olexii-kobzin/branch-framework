@@ -8,11 +8,11 @@ interface ContainerInterface extends PsrContainerInterface
     public const DI_TYPE_TRANSIENT = 'transient';
     public const DI_TYPE_SINGLETON = 'singleton';
 
-    public function register(string $name, $component): void;
+    public function set(string $id, $definition, bool $replace = true): void;
 
-    public function configHas(string $id): bool;
+    public function setMultiple(array $definitions, bool $replace = true): void;
 
-    public function invoke(callable $callable): void ;
+    public function make(string $class, array $options = []): object;
 
-    public function buildObject(string $class, array $parameters = []): object;
+    public function invoke(callable $callable, array $args = []);
 }

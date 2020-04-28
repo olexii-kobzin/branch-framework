@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Middleware;
 
+use Branch\App;
 use Branch\Interfaces\ConfigInterface;
 use Exception;
 use Fig\Http\Message\StatusCodeInterface;
@@ -13,17 +14,17 @@ use Psr\Http\Server\MiddlewareInterface;
 
 class MethodValidationMiddleware implements MiddlewareInterface
 {
-    protected ConfigInterface $config;
+    protected App $app;
 
-    public function __construct(ConfigInterface $config)
+    public function __construct(App $app)
     {
-        $this->config = $config;
+        $this->app = $app;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $requestMethod = $request->getMethod();
-        $actionMethods = $this->config->get('sys.action.methods');
+        $actionMethods = $this->app->get('_sys.routing.action.methods');
         
         if ($actionMethods && !in_array($requestMethod, $actionMethods)) {
             // TODO: add http exception

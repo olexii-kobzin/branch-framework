@@ -7,13 +7,17 @@ use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
 use Branch\Container\Container;
 
-class App
+class App extends Container
 {
     protected static ?self $instance = null;
 
-    protected ContainerInterface $container;
+    protected string $configFolder = '';
 
-    protected function __construct() {}
+    protected string $routesFolder = '';
+
+    protected function __construct() {
+        parent::__construct();
+    }
 
     public static function getInstance(): self
     {
@@ -24,19 +28,71 @@ class App
         return static::$instance;
     }
 
-    public function init()
+    public function init(string $configFolder, string $routesFolder)
     {
-        $this->container = new Container();
+        $this->configFolder = $configFolder;
+        $this->routesFolder = $routesFolder;
 
-        $router = $this->container->get(RouterInterface::class);
+        $this->set(App::class, $this);
+        $this->set('config', $this->getConfig());
+        $this->setMultiple($this->getDi());
+        $this->set('_sys.routing.defaultMiddleware', $this->getDefaultMiddleware());
+        $this->set('_sys.routing.routes', $this->getRoutes());
+
+        $router = $this->get(RouterInterface::class);
         $router->init();
 
         require __DIR__ . '/helpers.php';
     }
 
-    public function getContainer(): ContainerInterface
+    public function getConfigFolder(): string
     {
-        return $this->container;
+        return $this->configFolder;
+    }
+
+    public function getRoutesFolder(): string
+    {
+        return $this->routesFolder;
+    }
+
+    protected function getConfig(): array
+    {
+        $path = implode(DIRECTORY_SEPARATOR, [
+            $this->configFolder,
+            'config.php',
+        ]);
+
+        return require $path;
+    }
+
+    protected function getDi(): array
+    {
+        $path = implode(DIRECTORY_SEPARATOR, [
+            $this->configFolder,
+            'di.php',
+        ]);
+
+        return require $path;
+    }
+
+    protected function getDefaultMiddleware(): array
+    {
+        $path = implode(DIRECTORY_SEPARATOR, [
+            $this->configFolder,
+            'middleware.php',
+        ]);
+
+        return require $path;
+    }
+
+    protected function getRoutes()
+    {
+        $path = implode(DIRECTORY_SEPARATOR, [
+            $this->routesFolder,
+            'index.php',
+        ]);
+
+        return require $path;
     }
 
 }

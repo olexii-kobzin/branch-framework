@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Branch\Routing;
 
-use Branch\Interfaces\Container\ContainerInterface;
+use Branch\App;
 use Branch\Interfaces\Middleware\ActionInterface;
 use Branch\Interfaces\Middleware\CallbackActionInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
@@ -15,39 +15,28 @@ use InvalidArgumentException;
 
 class RouteInvoker implements RouteInvokerInterface
 {
-    protected ContainerInterface $container;
+    protected App $app;
 
     protected ServerRequestInterface $request;
 
-    protected ResponseInterface $response;
-
     protected MiddlewarePipeInterface $pipe;
 
-    protected string $defaultConfigPath = __DIR__ . '/../config/middleware.php';
-
-    protected string $configPath = '../config/middleware.php';
-
-    protected array $defaultMiddlewareConfig = [];
+    protected array $defaultMiddleware = [];
 
     protected array $middleware = [];
 
     protected string $path;
 
     public function __construct(
-        ContainerInterface $container,
+        App $app,
         ServerRequestInterface $request,
-        ResponseInterface $response, 
         MiddlewarePipeInterface $pipe
     )
     {
-        $this->container = $container;
+        $this->app = $app;
         $this->request = $request;
-        $this->response = $response;
         $this->pipe = $pipe;
-
-        $config = require realpath($this->configPath);
-        $defaultConfig = require realpath($this->defaultConfigPath);
-        $this->defaultMiddlewareConfig = array_merge($defaultConfig, $config);
+        $this->defaultMiddleware = $this->app->get('_sys.routing.defaultMiddleware');
     }
 
     public function invoke(array $config, array $args): ResponseInterface
@@ -55,7 +44,7 @@ class RouteInvoker implements RouteInvokerInterface
         $this->path = $config['path'];
 
         $this->buildMiddleware(array_merge(
-            $this->defaultMiddlewareConfig,
+            $this->defaultMiddleware,
             $config['middleware'] ?? []
         ));
 
@@ -71,9 +60,9 @@ class RouteInvoker implements RouteInvokerInterface
     {
         foreach ($middleware as $key => $config) {
             if (is_numeric($key)) {
-                $this->middleware[] = $this->container->buildObject($config);
+                $this->middleware[] = $this->app->make($config);
             } else if (is_string($key)) {
-                $this->middleware[] = $this->container->buildObject($key, $config['parameters']);
+                $this->middleware[] = $this->app->make($key, $config);
             } else {
                 throw new Exception("Can't recognize middleware with key {$key} for path {$this->path}");
             }
@@ -104,7 +93,7 @@ class RouteInvoker implements RouteInvokerInterface
 
     protected function buildCallback(callable $handler)
     {
-        $callbackAction = $this->container->get(CallbackActionInterface::class);
+        $callbackAction = $this->app->get(CallbackActionInterface::class);
         $callbackAction->setHandler($handler);
 
         return $callbackAction;
@@ -112,7 +101,7 @@ class RouteInvoker implements RouteInvokerInterface
 
     protected function buildAction(string $action)
     {
-        $action = $this->container->buildObject($action);
+        $action = $this->app->make($action);
 
         return $action;
     }

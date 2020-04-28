@@ -3,8 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Routing;
 
-use Branch\Interfaces\ConfigInterface;
-use Exception;
+use Branch\App;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
@@ -13,11 +12,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Fig\Http\Message\RequestMethodInterface;
 use Fig\Http\Message\StatusCodeInterface;
+use Exception;
 
 class Router implements RouterInterface, RequestMethodInterface, StatusCodeInterface
 {
-    protected string $configPath = '../routes/index.php';
-
     protected ContainerInterface $container;
 
     protected RouteInvokerInterface $invoker;
@@ -28,11 +26,9 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected EmitterInterface $emitter;
 
-    protected ConfigInterface $config;
-
     protected string $path = '';
 
-    protected $routerConfig;
+    protected $routesConfig;
 
     protected array $groupStack = [];
 
@@ -41,27 +37,26 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     protected array $args = [];
 
     public function __construct(
-        ContainerInterface $container,
+        App $app,
         RouteInvokerInterface $invoker,
         ServerRequestInterface $request,
         ResponseInterface $response,
         EmitterInterface $emitter,
-        ConfigInterface $config
+        string $default = '10'
     )
     {
-        $this->container = $container;
+        $this->app = $app;
         $this->invoker = $invoker;
         $this->request = $request;
         $this->response = $response;
         $this->emitter = $emitter;
-        $this->config = $config;
         $this->path = $this->request->getUri()->getPath();
-        $this->routerConfig = require realpath($this->configPath);
+        $this->routesConfig = $this->app->get('_sys.routing.routes');
     }  
 
     public function init(): void
     {
-        $this->container->invoke($this->routerConfig);
+        $this->app->invoke($this->routesConfig);
 
         $matchedRoute = $this->matchRoute();
 
@@ -78,7 +73,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
         $this->groupStack[] = RouteCollectorHelper::getGroupConfig($end, $config);
 
-        $this->container->invoke($handler);
+        $this->app->invoke($handler);
 
         array_pop($this->groupStack);
     }
@@ -132,7 +127,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected function updateActionConfigInfo($matchedRoute)
     {
-        $this->config->set('sys.action', array_filter(
+        $this->app->set('_sys.routing.action', array_filter(
             $matchedRoute, 
             fn($v, $k) => !in_array($k, ['handler']),
             ARRAY_FILTER_USE_BOTH

@@ -10,23 +10,14 @@ if (!function_exists('app')) {
     }
 }
 
-if (!function_exists('container')) {
-    function container() {
-        $app = app();
-        return $app->getContainer();
-    }
-}
-
 if (!function_exists('config')) {
     function config() {
-        $container = container();
-        return $container->get(ConfigInterface::class);
+        return app()->get(ConfigInterface::class);
     }
 }
 
 if (!function_exists('router')) {
     function router() {
-        $container = container();
-        return $container->get(RouterInterface::class);
+        return app()->get(RouterInterface::class);
     }
 }
