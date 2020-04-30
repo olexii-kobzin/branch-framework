@@ -13,6 +13,7 @@ use Psr\Http\Message\ResponseInterface;
 use Fig\Http\Message\RequestMethodInterface;
 use Fig\Http\Message\StatusCodeInterface;
 use Exception;
+use UnexpectedValueException;
 
 class Router implements RouterInterface, RequestMethodInterface, StatusCodeInterface
 {
@@ -41,8 +42,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         RouteInvokerInterface $invoker,
         ServerRequestInterface $request,
         ResponseInterface $response,
-        EmitterInterface $emitter,
-        string $default = '10'
+        EmitterInterface $emitter
     )
     {
         $this->app = $app;
@@ -51,7 +51,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         $this->response = $response;
         $this->emitter = $emitter;
         $this->path = $this->request->getUri()->getPath();
-        $this->routesConfig = $this->app->get('_sys.routing.routes');
+        $this->routesConfig = $this->app->get('_branch.routing.routes');
     }  
 
     public function init(): void
@@ -59,9 +59,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         $this->app->invoke($this->routesConfig);
 
         $matchedRoute = $this->matchRoute();
-
         $this->updateActionConfigInfo($matchedRoute);
-
         $response = $this->invoker->invoke($matchedRoute, $this->args);
 
         $this->emitter->emit($response);
@@ -125,9 +123,50 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         $this->routes[] = RouteCollectorHelper::getRouteConfig($end, $config);
     }
 
+    public function getRouteByName(string $name, array $params = []): string
+    {
+        $route = $this->findRouteByName($name);
+
+        if (!$route) {
+            throw new UnexpectedValueException("Route with name {$name} was not found");
+        }
+
+        $path = preg_replace_callback($route['pattern'], function (array $matches) use ($params) {
+            $path = reset($matches);
+            $paramMatches = array_filter($matches, fn($k) => is_string($k), ARRAY_FILTER_USE_KEY);
+            $pathParams = array_filter($params, fn($k) => isset($paramMatches[$k]), ARRAY_FILTER_USE_KEY);
+            $extraParams = array_diff_key($params, $pathParams);
+
+            if (count($paramMatches) !== count($pathParams)) {
+                throw new UnexpectedValueException('Wrong route parameters provided');
+            }
+
+            $path = array_reduce(array_keys($paramMatches), function($carry, $key) use ($paramMatches, $pathParams) {
+                return str_replace($paramMatches[$key], $pathParams[$key], $carry);
+            }, $path);
+
+            $query = !empty($extraParams) ? '?' . http_build_query($extraParams) : '';
+
+            return $path . $query;
+        }, $route['path']);
+
+        return $path;
+    }
+
+    protected function findRouteByName(string $alias): ?array
+    {
+        foreach ($this->routes as $route) {
+            if ($alias === ($route['name'] ?? null)) {
+               return $route;
+            }
+        }
+
+        return null;
+    }
+
     protected function updateActionConfigInfo($matchedRoute)
     {
-        $this->app->set('_sys.routing.action', array_filter(
+        $this->app->set('_branch.routing.action', array_filter(
             $matchedRoute, 
             fn($v, $k) => !in_array($k, ['handler']),
             ARRAY_FILTER_USE_BOTH

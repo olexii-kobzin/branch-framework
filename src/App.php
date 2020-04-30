@@ -36,12 +36,12 @@ class App extends Container
         $this->set(App::class, $this);
         $this->set('config', $this->getConfig());
         $this->setMultiple($this->getDi());
-        $this->set('_sys.routing.defaultMiddleware', $this->getDefaultMiddleware());
-        $this->set('_sys.routing.routes', $this->getRoutes());
+        $this->set('_branch.routing.defaultMiddleware', $this->getDefaultMiddleware());
+        $this->set('_branch.routing.routes', $this->getRoutes());
 
         $router = $this->get(RouterInterface::class);
         $router->init();
-
+    
         require __DIR__ . '/helpers.php';
     }
 
@@ -57,7 +57,7 @@ class App extends Container
 
     protected function getConfig(): array
     {
-        $path = implode(DIRECTORY_SEPARATOR, [
+        $path = implode(DS, [
             $this->configFolder,
             'config.php',
         ]);
@@ -67,7 +67,7 @@ class App extends Container
 
     protected function getDi(): array
     {
-        $path = implode(DIRECTORY_SEPARATOR, [
+        $path = implode(DS, [
             $this->configFolder,
             'di.php',
         ]);
@@ -77,7 +77,7 @@ class App extends Container
 
     protected function getDefaultMiddleware(): array
     {
-        $path = implode(DIRECTORY_SEPARATOR, [
+        $path = implode(DS, [
             $this->configFolder,
             'middleware.php',
         ]);
@@ -87,7 +87,7 @@ class App extends Container
 
     protected function getRoutes()
     {
-        $path = implode(DIRECTORY_SEPARATOR, [
+        $path = implode(DS, [
             $this->routesFolder,
             'index.php',
         ]);

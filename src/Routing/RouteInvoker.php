@@ -36,7 +36,7 @@ class RouteInvoker implements RouteInvokerInterface
         $this->app = $app;
         $this->request = $request;
         $this->pipe = $pipe;
-        $this->defaultMiddleware = $this->app->get('_sys.routing.defaultMiddleware');
+        $this->defaultMiddleware = $this->app->get('_branch.routing.defaultMiddleware');
     }
 
     public function invoke(array $config, array $args): ResponseInterface

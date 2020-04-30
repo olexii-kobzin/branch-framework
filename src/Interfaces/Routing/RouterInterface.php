@@ -22,4 +22,6 @@ interface RouterInterface
     public function any(array $config, $handler): void;
 
     public function map(array $methods, array $config, $handler): void;
+
+    public function getRouteByName(string $name, array $params = []): ?string;
 }
