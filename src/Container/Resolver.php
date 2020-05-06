@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace Branch\Container;
 
 use Branch\App;
-use Branch\Container\DefinitionHelper;
+use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Interfaces\Container\ResolverInterface;
 use ReflectionClass;
 use LogicException;
@@ -13,22 +13,25 @@ class Resolver implements ResolverInterface
 {
     protected App $app;
 
-    public function __construct(App $app)
+    protected DefinitionInfoInterface $definitionInfo;
+
+    public function __construct(App $app, DefinitionInfoInterface $definitionInfo)
     {
         $this->app = $app;
+        $this->definitionInfo = $definitionInfo;
     }
 
     public function resolve($definition)
     {
         $resolved = null;
 
-        if (DefinitionHelper::isClosureDefinition($definition)) {
+        if ($this->definitionInfo->isClosureDefinition($definition)) {
             $resolved = call_user_func($definition, $this->app);
-        } elseif (DefinitionHelper::isInstanceDefinition($definition)) {
+        } elseif ($this->definitionInfo->isInstanceDefinition($definition)) {
             $resolved = $definition;
-        } elseif (DefinitionHelper::isArrayObjectDefinition($definition)) {
+        } elseif ($this->definitionInfo->isArrayObjectDefinition($definition)) {
             $resolved = $this->resolveObject($definition);
-        } elseif (DefinitionHelper::isStringObjectDefinition($definition)) {
+        } elseif ($this->definitionInfo->isStringObjectDefinition($definition)) {
             $resolved = $this->resolveObject(['class' => $definition]);
         } else {
             $resolved = $definition;

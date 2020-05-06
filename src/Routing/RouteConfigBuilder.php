@@ -3,25 +3,27 @@ declare(strict_types=1);
 
 namespace Branch\Routing;
 
-class RouteCollectorHelper
+use Branch\Interfaces\Routing\RouteConfigBuilderInterface;
+
+class RouteConfigBuilder implements RouteConfigBuilderInterface
 {
-    public static function getGroupConfig(array $end, array $config): array
+    public function getGroupConfig(array $end, array $config): array
     {
-        return static::mergeConifg($end, $config);
+        return $this->mergeConifg($end, $config);
     }
 
-    public static function getRouteConfig(array $end, array $config): array
+    public function getRouteConfig(array $end, array $config): array
     {
-        $mergedConfig = static::mergeConifg($end, $config);
-        $mergedConfig['pattern'] = static::buildPattern($mergedConfig['path']);
+        $mergedConfig = $this->mergeConifg($end, $config);
+        $mergedConfig['pattern'] = $this->buildPattern($mergedConfig['path']);
 
         return $mergedConfig;
     }
 
-    protected static function mergeConifg(array $end, array $config): array
+    protected function mergeConifg(array $end, array $config): array
     {
         $config = array_merge($config, [
-            'path' => static::mergePath($end, $config),
+            'path' => $this->mergePath($end, $config),
         ]);
 
         return array_merge_recursive(array_filter(
@@ -29,7 +31,7 @@ class RouteCollectorHelper
         ), $config);
     }
 
-    protected static function mergePath(array $old, array $new): string
+    protected function mergePath(array $old, array $new): string
     {
         $old = $old['path'] ?? '';
         $path = isset($new['path']) ? trim($old, '/').'/'.trim($new['path'], '/') : $old;
@@ -37,7 +39,7 @@ class RouteCollectorHelper
         return trim($path, '/');
     }
 
-    protected static function buildPattern(string $path): string
+    protected function buildPattern(string $path): string
     {
         $pattern = [];
         $parts = explode('/', trim($path, '/'));

@@ -17,6 +17,8 @@ class RouteInvoker implements RouteInvokerInterface
 {
     protected App $app;
 
+    protected CallbackActionInterface $callbackAction;
+
     protected ServerRequestInterface $request;
 
     protected MiddlewarePipeInterface $pipe;
@@ -29,11 +31,13 @@ class RouteInvoker implements RouteInvokerInterface
 
     public function __construct(
         App $app,
+        CallbackActionInterface $callbackAction,
         ServerRequestInterface $request,
         MiddlewarePipeInterface $pipe
     )
     {
         $this->app = $app;
+        $this->callbackAction = $callbackAction;
         $this->request = $request;
         $this->pipe = $pipe;
         $this->defaultMiddleware = $this->app->get('_branch.routing.defaultMiddleware');
@@ -91,15 +95,14 @@ class RouteInvoker implements RouteInvokerInterface
         }
     }
 
-    protected function buildCallback(callable $handler)
+    protected function buildCallback(Closure $handler): CallbackActionInterface
     {
-        $callbackAction = $this->app->get(CallbackActionInterface::class);
-        $callbackAction->setHandler($handler);
+        $this->callbackAction->setHandler($handler);
 
-        return $callbackAction;
+        return $this->callbackAction;
     }
 
-    protected function buildAction(string $action)
+    protected function buildAction(string $action): ActionInterface
     {
         $action = $this->app->make($action);
 

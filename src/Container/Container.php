@@ -3,10 +3,11 @@ declare(strict_types=1);
 
 namespace Branch\Container;
 
-use Branch\Interfaces\Container\ContainerInterface;
-use Branch\Container\DefinitionHelper;
 use Adbar\Dot;
-use LogicException;
+use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Interfaces\Container\DefinitionInfoInterface;
+use Branch\Interfaces\Container\InvokerInterface;
+use Branch\Interfaces\Container\ResolverInterface;
 use OutOfBoundsException;
 use Exception;
 
@@ -18,18 +19,35 @@ class Container implements ContainerInterface
 
     protected array $entriesBeingResolved = [];
 
-    protected Resolver $resolver;
+    protected ResolverInterface $resolver;
 
-    protected Invoker $invoker;
+    protected InvokerInterface $invoker;
+
+    protected DefinitionInfoInterface $definitionInfo;
 
     public function __construct()
     {
         $this->definitions = new Dot();
         $this->entriesResolved = new Dot();
 
-        // TODO: move to App::boostrap after definitions load
-        $this->resolver = new Resolver($this);
+        $this->definitionInfo = new DefinitionInfo();
+        $this->resolver = new Resolver($this, $this->definitionInfo);
         $this->invoker = new Invoker($this->resolver);
+    }
+
+    public function setResolver(ResolverInterface $resolver): void
+    {
+        $this->resolver = $resolver;
+    }
+
+    public function setInvoker(InvokerInterface $invoker): void
+    {
+        $this->invoker = $invoker;
+    }
+    
+    public function setDefiniionInfo(DefinitionInfoInterface $definitionInfo): void
+    {
+        $this->definitionInfo = $definitionInfo;
     }
 
     public function has($id)
@@ -46,7 +64,7 @@ class Container implements ContainerInterface
         if ($this->isDefinitionIdResolvable($id) && !$this->hasResolved($id)) {
             $resolved = $this->resolveDefinition($id, $this->definitions->get($id));
 
-            if (!DefinitionHelper::isTransient($this->definitions->get($id))) {
+            if (!$this->definitionInfo->isTransient($this->definitions->get($id))) {
                 $this->entriesResolved->set($id, $resolved);
             }
         } else {
@@ -61,7 +79,7 @@ class Container implements ContainerInterface
     public function set(string $id, $definition, bool $replace = true): void
     {
         if (!$replace && $this->has($id)) {
-            throw new LogicException("Definition '$id' already present");
+            throw new OutOfBoundsException("Definition '$id' already present");
         }
 
         $this->definitions->set($id, $definition);

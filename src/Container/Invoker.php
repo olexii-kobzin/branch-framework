@@ -3,18 +3,19 @@ declare(strict_types=1);
 
 namespace Branch\Container;
 
-use Branch\Container\Resolver;
+use Branch\Interfaces\Container\InvokerInterface;
+use Branch\Interfaces\Container\ResolverInterface;
 use LogicException;
 use ReflectionFunction;
 use ReflectionFunctionAbstract;
 use ReflectionMethod;
 use Closure;
 
-class Invoker
+class Invoker implements InvokerInterface
 {
-    protected Resolver $resolver;
+    protected ResolverInterface $resolver;
 
-    public function __construct(Resolver $resolver)
+    public function __construct(ResolverInterface $resolver)
     {
         $this->resolver = $resolver;
     }
@@ -25,7 +26,7 @@ class Invoker
 
         $arguments = $this->resolver->resolveArgs($reflection->getParameters(), $args);
 
-        $reflection->invokeArgs($arguments);
+        return $reflection->invokeArgs($arguments);
     }
 
     protected function prepareInvoke(callable $callable): ReflectionFunctionAbstract

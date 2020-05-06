@@ -5,6 +5,7 @@ namespace Branch\Routing;
 
 use Branch\App;
 use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Interfaces\Routing\RouteConfigBuilderInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
 use Laminas\HttpHandlerRunner\Emitter\EmitterInterface;
@@ -20,6 +21,8 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     protected ContainerInterface $container;
 
     protected RouteInvokerInterface $invoker;
+
+    protected RouteConfigBuilderInterface $configBuilder;
 
     protected ServerRequestInterface $request;
 
@@ -40,6 +43,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     public function __construct(
         App $app,
         RouteInvokerInterface $invoker,
+        RouteConfigBuilderInterface $configBuilder,
         ServerRequestInterface $request,
         ResponseInterface $response,
         EmitterInterface $emitter
@@ -47,6 +51,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     {
         $this->app = $app;
         $this->invoker = $invoker;
+        $this->configBuilder = $configBuilder;
         $this->request = $request;
         $this->response = $response;
         $this->emitter = $emitter;
@@ -69,7 +74,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     {
         $end = $this->getGroupStackEnd();
 
-        $this->groupStack[] = RouteCollectorHelper::getGroupConfig($end, $config);
+        $this->groupStack[] = $this->configBuilder->getGroupConfig($end, $config);
 
         $this->app->invoke($handler);
 
@@ -120,7 +125,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
             'handler' => $handler,
         ]);
 
-        $this->routes[] = RouteCollectorHelper::getRouteConfig($end, $config);
+        $this->routes[] = $this->configBuilder->getRouteConfig($end, $config);
     }
 
     public function getRouteByName(string $name, array $params = []): string

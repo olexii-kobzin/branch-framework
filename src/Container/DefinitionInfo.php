@@ -4,18 +4,19 @@ declare(strict_types=1);
 namespace Branch\Container;
 
 use Branch\Interfaces\Container\ContainerInterface;
+use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Closure;
 
-class DefinitionHelper
+class DefinitionInfo implements DefinitionInfoInterface
 {
-    public static function isTransient($definition): bool
+    public function isTransient($definition): bool
     {
-        return self::isArrayObjectDefinition($definition)
+        return $this->isArrayObjectDefinition($definition)
             && isset($definition['type'])
             && $definition['type'] === ContainerInterface::DI_TYPE_TRANSIENT;
     }
 
-    public static function isArrayObjectDefinition($definition): bool
+    public function isArrayObjectDefinition($definition): bool
     {
         return is_array($definition)
             && isset($definition['class'])
@@ -23,29 +24,29 @@ class DefinitionHelper
             && class_exists($definition['class']);
     }
 
-    public static function isStringObjectDefinition($definition): bool
+    public function isStringObjectDefinition($definition): bool
     {
         return is_string($definition)
             && class_exists($definition);
     }
 
-    public static function isInstanceDefinition($definition): bool
+    public function isInstanceDefinition($definition): bool
     {
         return is_object($definition);
     }
 
-    public static function isClosureDefinition($definition): bool
+    public function isClosureDefinition($definition): bool
     {
-        return self::isInstanceDefinition($definition)
+        return $this->isInstanceDefinition($definition)
             && $definition instanceof Closure;
     }
 
-    public static function isArrayDefinition($definition): bool
+    public function isArrayDefinition($definition): bool
     {
         return is_array($definition);
     }
 
-    public static function isScalarDefinition($definition): bool
+    public function isScalarDefinition($definition): bool
     {
         return is_string($definition)
             || is_float($definition)
@@ -54,7 +55,7 @@ class DefinitionHelper
             || is_null($definition);
     }
 
-    public static function isResourceDefinition($definition): bool
+    public function isResourceDefinition($definition): bool
     {
         return is_resource($definition);
     }

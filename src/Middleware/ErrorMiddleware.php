@@ -42,7 +42,7 @@ class ErrorMiddleware implements MiddlewareInterface
                 : $report;
 
             $response = $this->response->withHeader('Content-Type', 'application/json');
-            $response = $response->withStatus(self::getHttpCode($e));
+            $response = $response->withStatus($this->getHttpCode($e));
             $body = $response->getBody();
             $body->write(json_encode($report));
         }
@@ -51,15 +51,15 @@ class ErrorMiddleware implements MiddlewareInterface
         return $response;
     }
 
-    protected static function getHttpCode(Throwable $e)
+    protected function getHttpCode(Throwable $e)
     {
         $code = $e->getCode();
-        $isHttpCode = is_integer($code) && self::isAllowedHttpCode($code);
+        $isHttpCode = is_integer($code) && $this->isAllowedHttpCode($code);
 
         return $isHttpCode ? $code : 500;
     }
 
-    protected static function isAllowedHttpCode(int $code)
+    protected function isAllowedHttpCode(int $code)
     {
         return self::HTTP_MIN_CODE <= $code && $code <= self::HTTP_MAX_CODE;
     }

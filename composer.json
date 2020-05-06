@@ -31,6 +31,9 @@
       "nyholm/psr7": "^1.2.1",
       "nyholm/psr7-server": "^0.4.1"
   },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  },
   "autoload": {
       "psr-4": {
           "Branch\\": "src"
