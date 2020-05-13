@@ -20,7 +20,7 @@ class RouteInvokerTest extends BaseTestCase
 {
     use ProphecyTrait;
 
-    protected $invoker;
+    protected RouteInvokerInterface $invoker;
 
     protected $appProphecy;
 
@@ -60,6 +60,20 @@ class RouteInvokerTest extends BaseTestCase
             $this->requestProphecy->reveal(),
             $this->pipeProphecy->reveal()
         );        
+    }
+
+    public function testDefaultMiddlewareWasFilled(): void
+    {   
+        $defaultMiddlewareReflection = $this->getPropertyReflection($this->invoker, 'defaultMiddleware');
+
+        $this->assertCount(2, $defaultMiddlewareReflection->getValue($this->invoker));
+    }
+
+    public function testMiddlewareIsEmptyAfterCreation(): void
+    {
+        $middlewareReflection = $this->getPropertyReflection($this->invoker, 'middleware');
+
+        $this->assertCount(0, $middlewareReflection->getValue($this->invoker));
     }
 
     public function testInvokeWithActionAsHandlerReturnsResponse(): void
@@ -118,7 +132,7 @@ class RouteInvokerTest extends BaseTestCase
         $actionProphecy = $this->prophesize(ActionInterface::class);
 
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
-            ->shouldNotBeCalled(2);
+            ->shouldNotBeCalled();
 
         $this->appProphecy->make(Argument::that(fn($argument) => in_array($argument, [
             'MiddlewareA',
@@ -170,7 +184,7 @@ class RouteInvokerTest extends BaseTestCase
             'handler' => 'ActionA',
         ], []);
 
-        $this->assertTrue(count($middlewarePropertyReflection->getValue($this->invoker)) === 4);
+        $this->assertCount(4, $middlewarePropertyReflection->getValue($this->invoker));
     }
 
     public function testMiddlewareWithArguemntsReturnsMiddlewareInterface(): void

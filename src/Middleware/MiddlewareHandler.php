@@ -10,13 +10,17 @@ use Psr\Http\Message\ResponseInterface;
 
 class MiddlewareHandler implements MiddlewareHandlerInterface
 {
-    protected array $pipe;
+    protected array $pipe = [];
 
     protected RequestHandlerInterface $fallbackHandler;
 
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (!count($this->pipe)) {
+        if (!isset($this->fallbackHandler)) {
+            throw new \LogicException('Fallback handler is required');
+        }
+
+        if (empty($this->pipe)) {
             return $this->fallbackHandler->handle($request);
         }
 

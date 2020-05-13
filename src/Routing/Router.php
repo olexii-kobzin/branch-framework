@@ -38,8 +38,6 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected array $routes = [];
 
-    protected array $args = [];
-
     public function __construct(
         App $app,
         RouteInvokerInterface $invoker,
@@ -63,10 +61,10 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     {
         $this->app->invoke($this->routesConfig);
 
-        $matchedRoute = $this->matchRoute();
-        $this->updateActionConfigInfo($matchedRoute);
+        [$route, $args] = $this->matchRoute();
+        $this->updateActionConfigInfo($route);
 
-        $response = $this->invoker->invoke($matchedRoute, $this->args);
+        $response = $this->invoker->invoke($route, $args);
 
         return $this->emitter->emit($response);
     }
@@ -189,12 +187,13 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     protected function matchRoute(): array
     {
         $match = [];
+        $args = [];
 
         foreach ($this->routes as $route) {
             $matchedParams = [];
             if (preg_match($route['pattern'], $this->path, $matchedParams)) {
                 $match = $route; 
-                $this->args = $this->filterMatchedParams($matchedParams);
+                $args = $this->filterMatchedParams($matchedParams);
                 break;
             }
         }
@@ -204,7 +203,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
             throw new Exception("Route {$this->path} not found", 404);
         }
 
-        return $match;
+        return [$match, $args];
     }
 
     protected function filterMatchedParams($matchedParams)

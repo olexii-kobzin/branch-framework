@@ -79,6 +79,22 @@ class RouterTest extends BaseTestCase
         );
     }
 
+    public function testGroupStackIsEmptyAtStart(): void
+    {
+        $router = $this->setUpRouter(self::$paths['root']['requestedPath']);
+        $groupStackReflection = $this->getPropertyReflection($router, 'groupStack');
+
+        $this->assertCount(0, $groupStackReflection->getValue($router));
+    }
+
+    public function testRoutesAreEmptyAtStart(): void
+    {
+        $router = $this->setUpRouter(self::$paths['root']['requestedPath']);
+        $routesReflection = $this->getPropertyReflection($router, 'routes');
+
+        $this->assertCount(0, $routesReflection->getValue($router));
+    }
+
     public function testRouterWithRootRoute(): void
     {
         $router = $this->setUpRouter(self::$paths['root']['requestedPath']);
@@ -258,7 +274,6 @@ class RouterTest extends BaseTestCase
     public function testRouteConfigIsMergedCorrectly(): void
     {
         $router = $this->setUpRouter(self::$paths['routeWithParams']['requestedPath']);
-
         $routesReflection = $this->getPropertyReflection($router, 'routes');
 
         $this->configBuilderProphecy->getRouteConfig(
