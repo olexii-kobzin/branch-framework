@@ -30,9 +30,9 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected EmitterInterface $emitter;
 
-    protected string $path = '';
+    protected \Closure $routesConfig;
 
-    protected $routesConfig;
+    protected string $path = '';
 
     protected array $groupStack = [];
 
@@ -59,18 +59,19 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         $this->routesConfig = $this->app->get('_branch.routing.routes');
     }  
 
-    public function init(): void
+    public function init(): bool
     {
         $this->app->invoke($this->routesConfig);
 
         $matchedRoute = $this->matchRoute();
         $this->updateActionConfigInfo($matchedRoute);
+
         $response = $this->invoker->invoke($matchedRoute, $this->args);
 
-        $this->emitter->emit($response);
+        return $this->emitter->emit($response);
     }
 
-    public function group(array $config, $handler): void
+    public function group(array $config, \Closure $handler): void
     {
         $end = $this->getGroupStackEnd();
 
@@ -128,7 +129,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         $this->routes[] = $this->configBuilder->getRouteConfig($end, $config);
     }
 
-    public function getRouteByName(string $name, array $params = []): string
+    public function getPathByName(string $name, array $params = []): string
     {
         $route = $this->findRouteByName($name);
 
@@ -191,7 +192,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
         foreach ($this->routes as $route) {
             $matchedParams = [];
-            if (preg_match($route['pattern'], trim($this->path, '/'), $matchedParams)) {
+            if (preg_match($route['pattern'], $this->path, $matchedParams)) {
                 $match = $route; 
                 $this->args = $this->filterMatchedParams($matchedParams);
                 break;

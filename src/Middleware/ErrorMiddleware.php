@@ -26,7 +26,7 @@ class ErrorMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         try {
-            $response =  $handler->handle($request);
+            $response = $handler->handle($request);
         } catch (Throwable $e) {
             $report = [
                 'code' => $e->getCode(),

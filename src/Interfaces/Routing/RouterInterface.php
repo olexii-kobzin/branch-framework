@@ -3,9 +3,9 @@ namespace Branch\Interfaces\Routing;
 
 interface RouterInterface
 {
-    public function init(): void;
+    public function init(): bool;
 
-    public function group(array $config, $handler): void;
+    public function group(array $config, \Closure $handler): void;
 
     public function get(array $config, $handler): void;
 
@@ -23,5 +23,5 @@ interface RouterInterface
 
     public function map(array $methods, array $config, $handler): void;
 
-    public function getRouteByName(string $name, array $params = []): ?string;
+    public function getPathByName(string $name, array $params = []): ?string;
 }

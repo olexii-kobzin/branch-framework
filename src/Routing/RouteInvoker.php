@@ -63,12 +63,10 @@ class RouteInvoker implements RouteInvokerInterface
     protected function buildMiddleware(array $middleware): void
     {
         foreach ($middleware as $key => $config) {
-            if (is_numeric($key)) {
-                $this->middleware[] = $this->app->make($config);
+            if (is_integer($key)) {
+                $this->middleware[$config] = $this->app->make($config);
             } else if (is_string($key)) {
-                $this->middleware[] = $this->app->make($key, $config);
-            } else {
-                throw new Exception("Can't recognize middleware with key {$key} for path {$this->path}");
+                $this->middleware[$key] = $this->app->make($key, $config);
             }
         }
     }

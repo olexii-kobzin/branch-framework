@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Branch;
 
-use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
 use Branch\Container\Container;
 
@@ -40,7 +39,10 @@ class App extends Container
         $this->set('_branch.routing.routes', $this->getRoutes());
 
         $router = $this->get(RouterInterface::class);
-        $router->init();
+        
+        if (!$router->init()) {
+            throw new \LogicException("Can't emit response");
+        }
     
         require __DIR__ . '/helpers.php';
     }

@@ -27,7 +27,8 @@ class RouteConfigBuilder implements RouteConfigBuilderInterface
         ]);
 
         return array_merge_recursive(array_filter(
-            $end, fn($key) => !in_array($key, ['path']), ARRAY_FILTER_USE_KEY
+            $end,
+            fn($key) => !in_array($key, ['path']), ARRAY_FILTER_USE_KEY
         ), $config);
     }
 
@@ -36,7 +37,7 @@ class RouteConfigBuilder implements RouteConfigBuilderInterface
         $old = $old['path'] ?? '';
         $path = isset($new['path']) ? trim($old, '/').'/'.trim($new['path'], '/') : $old;
 
-        return trim($path, '/');
+        return '/' . trim($path, '/');
     }
 
     protected function buildPattern(string $path): string
@@ -52,6 +53,6 @@ class RouteConfigBuilder implements RouteConfigBuilderInterface
             }
         }
 
-        return '/^' . implode('\/', $pattern) . '$/';
+        return '/^\/' . implode('\/', $pattern) . '$/';
     }
 }

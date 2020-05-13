@@ -31,7 +31,7 @@ class MethodValidationMiddleware implements MiddlewareInterface
             throw new Exception('Method not allowed', StatusCodeInterface::STATUS_METHOD_NOT_ALLOWED);
         }
         
-        $response =  $handler->handle($request);
+        $response = $handler->handle($request);
 
         return $response;
     }
