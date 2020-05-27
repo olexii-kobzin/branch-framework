@@ -20,7 +20,7 @@ class RouteInvokerTest extends BaseTestCase
 {
     use ProphecyTrait;
 
-    protected RouteInvokerInterface $invoker;
+    protected RouteInvoker $invoker;
 
     protected $appProphecy;
 
@@ -62,7 +62,14 @@ class RouteInvokerTest extends BaseTestCase
         );        
     }
 
-    public function testDefaultMiddlewareWasFilled(): void
+    public function testPathIsEmptyAfterCreation(): void
+    {
+        $pathReflection = $this->getPropertyReflection($this->invoker, 'path');
+
+        $this->assertFalse($pathReflection->isInitialized($this->invoker));
+    }
+
+    public function testDefaultMiddlewareIsFilled(): void
     {   
         $defaultMiddlewareReflection = $this->getPropertyReflection($this->invoker, 'defaultMiddleware');
 
@@ -80,10 +87,12 @@ class RouteInvokerTest extends BaseTestCase
     {
         $actionProphecy = $this->prophesize(ActionInterface::class);
 
+        $pathReflection = $this->getPropertyReflection($this->invoker, 'path');
+
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(2);
 
-        $this->appProphecy->make(Argument::that(fn($argument) => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
         ])))
@@ -100,6 +109,7 @@ class RouteInvokerTest extends BaseTestCase
         ], []);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertEquals('path-part-1/path-part-2', $pathReflection->getValue($this->invoker));
     }
 
     public function testInvokeWithCallbackReturnsResponse(): void
@@ -109,7 +119,7 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(2);
 
-        $this->appProphecy->make(Argument::that(fn($argument) => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
         ])))
@@ -121,7 +131,7 @@ class RouteInvokerTest extends BaseTestCase
 
         $response = $this->invoker->invoke([
             'path' => 'path-part-1/path-part-2',
-            'handler' => fn() => $responseProphecy->reveal(),
+            'handler' => fn(): ResponseInterface => $responseProphecy->reveal(),
         ], []);
 
         $this->assertInstanceOf(ResponseInterface::class, $response);
@@ -134,7 +144,7 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldNotBeCalled();
 
-        $this->appProphecy->make(Argument::that(fn($argument) => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
         ])))
@@ -163,7 +173,7 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(4);
 
-        $this->appProphecy->make(Argument::that(fn($argument) => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
             'MiddlewareC',
@@ -196,7 +206,7 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(4);
 
-        $this->appProphecy->make(Argument::that(fn($argument) => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
             'MiddlewareD',

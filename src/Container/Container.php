@@ -8,8 +8,6 @@ use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Interfaces\Container\InvokerInterface;
 use Branch\Interfaces\Container\ResolverInterface;
-use OutOfBoundsException;
-use Exception;
 
 class Container implements ContainerInterface
 {
@@ -58,7 +56,7 @@ class Container implements ContainerInterface
     public function get($id)
     {
         if (!$this->has($id)) {
-            throw new OutOfBoundsException("Definition '$id' was not found");
+            throw new \OutOfBoundsException("Definition '$id' was not found");
         }
 
         if ($this->isDefinitionIdResolvable($id) && !$this->hasResolved($id)) {
@@ -79,7 +77,7 @@ class Container implements ContainerInterface
     public function set(string $id, $definition, bool $replace = true): void
     {
         if (!$replace && $this->has($id)) {
-            throw new OutOfBoundsException("Definition '$id' already present");
+            throw new \OutOfBoundsException("Definition '$id' already present");
         }
 
         $this->definitions->set($id, $definition);
@@ -114,7 +112,7 @@ class Container implements ContainerInterface
     {
         if (isset($this->entriesBeingResolved[$id])) {
             // TODO: replace with specialized exception
-            throw new Exception("Circular dependency detected while trying to resolve '$id'");
+            throw new \Exception("Circular dependency detected while trying to resolve '$id'");
         }
 
         $this->entriesBeingResolved[$id] = true;

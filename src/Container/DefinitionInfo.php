@@ -5,7 +5,6 @@ namespace Branch\Container;
 
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
-use Closure;
 
 class DefinitionInfo implements DefinitionInfoInterface
 {
@@ -38,7 +37,7 @@ class DefinitionInfo implements DefinitionInfoInterface
     public function isClosureDefinition($definition): bool
     {
         return $this->isInstanceDefinition($definition)
-            && $definition instanceof Closure;
+            && $definition instanceof \Closure;
     }
 
     public function isArrayDefinition($definition): bool

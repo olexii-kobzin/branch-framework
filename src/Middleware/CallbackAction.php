@@ -4,15 +4,14 @@ declare(strict_types=1);
 namespace Branch\Middleware;
 
 use Branch\Interfaces\Middleware\CallbackActionInterface;
-use Closure;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 
 class CallbackAction extends Action implements CallbackActionInterface
 {
-    protected Closure $handler;
+    protected \Closure $handler;
 
-    public function setHandler(Closure $handler): void
+    public function setHandler(\Closure $handler): void
     {
         $this->handler = $handler;
     }

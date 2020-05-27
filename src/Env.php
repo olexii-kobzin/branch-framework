@@ -7,21 +7,21 @@ use Branch\Interfaces\EnvInterface;
 
 class Env implements EnvInterface
 {
-    private string $envPath = '';
+    protected string $path = '';
 
-    public function __construct(string $envPath)
+    public function __construct(string $path)
     {
-        $this->envPath = $envPath;
+        $this->path = $path;
     }
     
     public function get(): array
     {
-        $lines = file($this->envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        $lines = file($this->path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 
         return $this->parseEnv($lines);
     }
     
-    private function parseEnv($lines): array
+    protected function parseEnv(array $lines): array
     {
         $env = [];
 

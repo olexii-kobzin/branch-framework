@@ -6,8 +6,6 @@ namespace Branch\Container;
 use Branch\App;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Interfaces\Container\ResolverInterface;
-use ReflectionClass;
-use LogicException;
 
 class Resolver implements ResolverInterface
 {
@@ -15,7 +13,10 @@ class Resolver implements ResolverInterface
 
     protected DefinitionInfoInterface $definitionInfo;
 
-    public function __construct(App $app, DefinitionInfoInterface $definitionInfo)
+    public function __construct(
+        App $app,
+        DefinitionInfoInterface $definitionInfo
+    )
     {
         $this->app = $app;
         $this->definitionInfo = $definitionInfo;
@@ -42,7 +43,7 @@ class Resolver implements ResolverInterface
 
     public function resolveObject(array $config): object
     {
-        $reflectionClass = new ReflectionClass($config['class']);
+        $reflectionClass = new \ReflectionClass($config['class']);
         // TODO: check for fallback to parent constructor
         $constructor = $reflectionClass->getConstructor();
         if (!$constructor) {
@@ -80,7 +81,7 @@ class Resolver implements ResolverInterface
                 
                 $arguments[] = $this->app->get($type->getName());
             } else {
-                throw new LogicException("No type available for \"$name\" }");
+                throw new \LogicException("No type available for \"$name\" }");
             }
         }
 

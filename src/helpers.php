@@ -1,6 +1,7 @@
 <?php
 
 use Branch\App;
+use Branch\Interfaces\EnvInterface;
 use Branch\Interfaces\Routing\RouterInterface;
 
 if (!function_exists('app')) {
@@ -9,8 +10,8 @@ if (!function_exists('app')) {
     }
 }
 
-if (!function_exists('router')) {
-    function router() {
-        return app()->get(RouterInterface::class);
+if (!function_exists('config')) {
+    function config() {
+        return app()->get('config');
     }
 }

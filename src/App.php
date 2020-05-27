@@ -10,9 +10,7 @@ class App extends Container
 {
     protected static ?self $instance = null;
 
-    protected string $configFolder = '';
-
-    protected string $routesFolder = '';
+    protected array $config;
 
     protected function __construct() {
         parent::__construct();
@@ -27,16 +25,21 @@ class App extends Container
         return static::$instance;
     }
 
-    public function init(string $configFolder, string $routesFolder)
+    public function init(array $config): void
     {
-        $this->configFolder = $configFolder;
-        $this->routesFolder = $routesFolder;
-
-        $this->set(App::class, $this);
-        $this->set('config', $this->getConfig());
-        $this->setMultiple($this->getDi());
-        $this->set('_branch.routing.defaultMiddleware', $this->getDefaultMiddleware());
-        $this->set('_branch.routing.routes', $this->getRoutes());
+        $this->set(self::class, $this);
+        $this->set('env', $config['env']);
+        $this->set('config', call_user_func(
+            $config['config'],
+            $this->get('env')
+        ));
+        $this->setMultiple($config['di']);
+        $this->set('_branch.routing.defaultMiddleware', call_user_func(
+            $config['middleware'],
+            $this->get('env'),
+            $this->get('config')
+        ));
+        $this->set('_branch.routing.routes', $config['routes']);
 
         $router = $this->get(RouterInterface::class);
         
@@ -46,55 +49,4 @@ class App extends Container
     
         require __DIR__ . '/helpers.php';
     }
-
-    public function getConfigFolder(): string
-    {
-        return $this->configFolder;
-    }
-
-    public function getRoutesFolder(): string
-    {
-        return $this->routesFolder;
-    }
-
-    protected function getConfig(): array
-    {
-        $path = implode(DS, [
-            $this->configFolder,
-            'config.php',
-        ]);
-
-        return require $path;
-    }
-
-    protected function getDi(): array
-    {
-        $path = implode(DS, [
-            $this->configFolder,
-            'di.php',
-        ]);
-
-        return require $path;
-    }
-
-    protected function getDefaultMiddleware(): array
-    {
-        $path = implode(DS, [
-            $this->configFolder,
-            'middleware.php',
-        ]);
-
-        return require $path;
-    }
-
-    protected function getRoutes()
-    {
-        $path = implode(DS, [
-            $this->routesFolder,
-            'index.php',
-        ]);
-
-        return require $path;
-    }
-
 }

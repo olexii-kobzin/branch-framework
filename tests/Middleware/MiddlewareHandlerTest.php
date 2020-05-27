@@ -21,11 +21,18 @@ class MiddlewareHandlerTest extends BaseTestCase
         $this->middlewareHandler = new MiddlewareHandler();
     }
 
-    public function checkPipeIsEmptyAtStart(): void
+    public function checkPipeIsEmptyAfterCreation(): void
     {
         $pipeReflection = $this->getPropertyReflection($this->middlewareHandler, 'pipe');
 
         $this->assertCount(0, $pipeReflection->getValue($this->middlewareHandler));
+    }
+
+    public function testFallbackHandlerIsEmptyAfterCreation(): void
+    {
+        $fallbackHandler = $this->getPropertyReflection($this->middlewareHandler, 'fallbackHandler');
+
+        $this->assertFalse($fallbackHandler->isInitialized($this->middlewareHandler));
     }
 
     public function testPipeCouldBeSet(): void

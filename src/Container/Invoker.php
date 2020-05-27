@@ -5,11 +5,6 @@ namespace Branch\Container;
 
 use Branch\Interfaces\Container\InvokerInterface;
 use Branch\Interfaces\Container\ResolverInterface;
-use LogicException;
-use ReflectionFunction;
-use ReflectionFunctionAbstract;
-use ReflectionMethod;
-use Closure;
 
 class Invoker implements InvokerInterface
 {
@@ -22,32 +17,35 @@ class Invoker implements InvokerInterface
 
     public function invoke(callable $callable, array $args = [])
     {
-        $reflection = $this->prepareInvoke($callable);
+        [$object, $reflection] = $this->resolveCallable($callable);
 
         $arguments = $this->resolver->resolveArgs($reflection->getParameters(), $args);
 
-        return $reflection->invokeArgs($arguments);
+        return $object 
+            ? $reflection->invokeArgs($object, $arguments)
+            : $reflection->invokeArgs($arguments);
     }
 
-    protected function prepareInvoke(callable $callable): ReflectionFunctionAbstract
+    protected function resolveCallable(callable $callable): array
     {
+        $object = null;
         $reflection = null;
 
-        if ($callable instanceof Closure) {
-            $reflection = new ReflectionFunction($callable);
+        if ($callable instanceof \Closure) {
+            $reflection = new \ReflectionFunction($callable);
         } else if (is_object($callable)) {
-            $reflection = new ReflectionMethod($callable, '__invoke');
+            $object = $callable;
+            $reflection = new \ReflectionMethod($object, '__invoke');
         } else if (is_array($callable)) {
-            [$config, $method] = $callable;
-            $object = $this->resolver->resolve($config);
-
-            $reflection = new ReflectionMethod($object, $method);
-        }
+            [$definition, $method] = $callable;
+            $object = $this->resolver->resolve($definition);
+            $reflection = new \ReflectionMethod($object, $method);
+        } 
 
         if (!$reflection) {
-            throw new LogicException('Unknown callable reflection');
+            throw new \LogicException('Unknown callable reflection');
         }
 
-        return $reflection;
+        return [$object, $reflection];
     }
 }

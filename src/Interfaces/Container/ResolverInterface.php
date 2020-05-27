@@ -7,5 +7,5 @@ interface ResolverInterface
 
     public function resolveObject(array $config): object;
 
-    public function resolveArgs(array $argsConfig): array;
+    public function resolveArgs(array $argsConfig, array $predefined = []): array;
 }

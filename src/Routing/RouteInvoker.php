@@ -9,9 +9,6 @@ use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Closure;
-use Exception;
-use InvalidArgumentException;
 
 class RouteInvoker implements RouteInvokerInterface
 {
@@ -23,11 +20,11 @@ class RouteInvoker implements RouteInvokerInterface
 
     protected MiddlewarePipeInterface $pipe;
 
+    protected string $path;
+
     protected array $defaultMiddleware = [];
 
     protected array $middleware = [];
-
-    protected string $path;
 
     public function __construct(
         App $app,
@@ -75,12 +72,12 @@ class RouteInvoker implements RouteInvokerInterface
     {
         $action = null;
 
-        if ($handler instanceof Closure) {
+        if ($handler instanceof \Closure) {
             $action = $this->buildCallback($handler);
         } else if (is_string($handler)) {
             $action = $this->buildAction($handler);
         } else {
-            throw new InvalidArgumentException('Handler type is not recognized');
+            throw new \InvalidArgumentException('Handler type is not recognized');
         }
 
         return $action;
@@ -93,7 +90,7 @@ class RouteInvoker implements RouteInvokerInterface
         }
     }
 
-    protected function buildCallback(Closure $handler): CallbackActionInterface
+    protected function buildCallback(\Closure $handler): CallbackActionInterface
     {
         $this->callbackAction->setHandler($handler);
 

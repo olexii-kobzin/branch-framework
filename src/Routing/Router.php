@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace Branch\Routing;
 
 use Branch\App;
-use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Routing\RouteConfigBuilderInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
@@ -13,12 +12,10 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Message\ResponseInterface;
 use Fig\Http\Message\RequestMethodInterface;
 use Fig\Http\Message\StatusCodeInterface;
-use Exception;
-use UnexpectedValueException;
 
 class Router implements RouterInterface, RequestMethodInterface, StatusCodeInterface
 {
-    protected ContainerInterface $container;
+    protected App $app;
 
     protected RouteInvokerInterface $invoker;
 
@@ -32,7 +29,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected \Closure $routesConfig;
 
-    protected string $path = '';
+    protected string $path;
 
     protected array $groupStack = [];
 
@@ -132,17 +129,17 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         $route = $this->findRouteByName($name);
 
         if (!$route) {
-            throw new UnexpectedValueException("Route with name {$name} was not found");
+            throw new \UnexpectedValueException("Route with name {$name} was not found");
         }
 
         $path = preg_replace_callback($route['pattern'], function (array $matches) use ($params) {
             $path = reset($matches);
-            $paramMatches = array_filter($matches, fn($k) => is_string($k), ARRAY_FILTER_USE_KEY);
-            $pathParams = array_filter($params, fn($k) => isset($paramMatches[$k]), ARRAY_FILTER_USE_KEY);
+            $paramMatches = array_filter($matches, fn($k): bool => is_string($k), ARRAY_FILTER_USE_KEY);
+            $pathParams = array_filter($params, fn($k): bool => isset($paramMatches[$k]), ARRAY_FILTER_USE_KEY);
             $extraParams = array_diff_key($params, $pathParams);
 
             if (count($paramMatches) !== count($pathParams)) {
-                throw new UnexpectedValueException('Wrong route parameters provided');
+                throw new \UnexpectedValueException('Wrong route parameters provided');
             }
 
             $path = array_reduce(array_keys($paramMatches), function($carry, $key) use ($paramMatches, $pathParams) {
@@ -172,8 +169,8 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
     {
         $this->app->set('_branch.routing.action', array_filter(
             $matchedRoute, 
-            fn($v, $k) => !in_array($k, ['handler']),
-            ARRAY_FILTER_USE_BOTH
+            fn($k): bool => !in_array($k, ['handler']),
+            ARRAY_FILTER_USE_KEY
         ));
     }
 
@@ -200,7 +197,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
         if (!$match) {
             // TODO: Create Http exceptions
-            throw new Exception("Route {$this->path} not found", 404);
+            throw new \Exception("Route {$this->path} not found", 404);
         }
 
         return [$match, $args];

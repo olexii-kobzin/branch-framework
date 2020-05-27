@@ -32,13 +32,4 @@ class EnvTest extends BaseTestCase
         $this->assertEquals('value 1', $config['ENV_PARAM_1']);
         $this->assertEquals('value 2', $config['ENV_PARAM_2']);
     }
-
-    public function testExceptionIsThrownIfConfigIsNotFound()
-    {
-        $env = new Env('');
-
-        $this->expectError();
-
-        $env->get();
-    }
 }

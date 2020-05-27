@@ -5,7 +5,6 @@ namespace Branch\Middleware;
 
 use Branch\App;
 use Branch\Interfaces\ConfigInterface;
-use Exception;
 use Fig\Http\Message\StatusCodeInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -28,7 +27,7 @@ class MethodValidationMiddleware implements MiddlewareInterface
         
         if ($actionMethods && !in_array($requestMethod, $actionMethods)) {
             // TODO: add http exception
-            throw new Exception('Method not allowed', StatusCodeInterface::STATUS_METHOD_NOT_ALLOWED);
+            throw new \Exception('Method not allowed', StatusCodeInterface::STATUS_METHOD_NOT_ALLOWED);
         }
         
         $response = $handler->handle($request);

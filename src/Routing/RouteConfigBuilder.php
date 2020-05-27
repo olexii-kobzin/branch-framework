@@ -28,7 +28,7 @@ class RouteConfigBuilder implements RouteConfigBuilderInterface
 
         return array_merge_recursive(array_filter(
             $end,
-            fn($key) => !in_array($key, ['path']), ARRAY_FILTER_USE_KEY
+            fn($key): bool => !in_array($key, ['path']), ARRAY_FILTER_USE_KEY
         ), $config);
     }
 

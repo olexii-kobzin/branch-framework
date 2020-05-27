@@ -79,7 +79,7 @@ class RouterTest extends BaseTestCase
         );
     }
 
-    public function testGroupStackIsEmptyAtStart(): void
+    public function testGroupStackIsEmptyAfterCreation(): void
     {
         $router = $this->setUpRouter(self::$paths['root']['requestedPath']);
         $groupStackReflection = $this->getPropertyReflection($router, 'groupStack');
@@ -87,7 +87,7 @@ class RouterTest extends BaseTestCase
         $this->assertCount(0, $groupStackReflection->getValue($router));
     }
 
-    public function testRoutesAreEmptyAtStart(): void
+    public function testRoutesAreEmptyAfterCreation(): void
     {
         $router = $this->setUpRouter(self::$paths['root']['requestedPath']);
         $routesReflection = $this->getPropertyReflection($router, 'routes');
@@ -101,7 +101,7 @@ class RouterTest extends BaseTestCase
 
         $config = fn(RouterInterface $router) => $router->get([
             'path' => self::$paths['root']['path']
-        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response);
+        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response);
         
         $this->configBuilderProphecy->getRouteConfig(
             Argument::type('array'),
@@ -164,7 +164,7 @@ class RouterTest extends BaseTestCase
 
         $config = fn(RouterInterface $router) => $router->get([
             'path' => self::$paths['routeWithParams']['path'],
-        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response);
+        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response);
         
         $this->configBuilderProphecy->getRouteConfig(
             Argument::type('array'),
@@ -196,7 +196,7 @@ class RouterTest extends BaseTestCase
 
         $config = fn(RouterInterface $router) => $router->get([
             'path' => self::$paths['routeWithParams']['path']
-        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response);
+        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response);
         
         $this->configBuilderProphecy->getRouteConfig(
             Argument::type('array'),
@@ -235,7 +235,7 @@ class RouterTest extends BaseTestCase
 
         $routeConfig = fn(RouterInterface $router) => $router->get([
             'path' => 'groupRoute'
-        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response);
+        ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response);
         
         $this->configBuilderProphecy->getGroupConfig(
             Argument::type('array'),
@@ -278,7 +278,7 @@ class RouterTest extends BaseTestCase
 
         $this->configBuilderProphecy->getRouteConfig(
             Argument::exact([]),
-            Argument::that(fn($argument) =>
+            Argument::that(fn(array $argument): bool =>
                 isset($argument['methods'])
                 && is_array($argument['methods'])
                 && !array_diff(['GET', 'PUT'], $argument['methods'])
@@ -438,28 +438,28 @@ class RouterTest extends BaseTestCase
         return  [
             [fn(RouterInterface $router) => $router->get([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->post([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->put([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->patch([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->delete([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->options([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->any([
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
             [fn(RouterInterface $router) => $router->map(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], [
                 'path' => self::$paths['route']['path']
-            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args) => $response)],
+            ], fn(ServerRequestInterface $request, ResponseInterface $response, array $args): ResponseInterface => $response)],
         ];
     }
 }

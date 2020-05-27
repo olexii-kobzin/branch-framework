@@ -7,7 +7,7 @@ use Branch\Tests\BaseTestCase;
 
 class RouteConfigBuilderTest extends BaseTestCase
 {
-    protected static $routeConfigBuilder;
+    protected static RouteConfigBuilder $routeConfigBuilder;
 
     public static function setUpBeforeClass(): void
     {

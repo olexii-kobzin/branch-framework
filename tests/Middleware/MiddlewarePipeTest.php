@@ -27,7 +27,7 @@ class MiddlewarePipeTest extends BaseTestCase
         $this->middlewarePipe = new MiddlewarePipe($this->middlewareHandlerProphecy->reveal());
     }
 
-    public function testPipeIsEmptyAtStart(): void
+    public function testPipeIsEmptyAfterCreation(): void
     {
         $pipeReflection = $this->getPropertyReflection($this->middlewarePipe, 'pipe');
 
