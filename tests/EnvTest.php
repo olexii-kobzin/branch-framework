@@ -8,11 +8,24 @@ class EnvTest extends BaseTestCase
 {
     protected Env $env;
 
-    protected function setUp(): void
-    {
-        $envPath = __DIR__ . '/sample-files/.env';
+    protected string $path;
 
-        $this->env = new Env($envPath);
+    public function setUp(): void
+    {
+        $this->path = sys_get_temp_dir() . DIRECTORY_SEPARATOR . microtime() . uniqid();
+
+        $env = <<<ENV
+ENV_PARAM_1=value 1   
+ENV_PARAM_2=value 2
+ENV;
+        file_put_contents($this->path, $env);
+
+        $this->env = new Env($this->path);
+    }
+
+    public function tearDown(): void
+    {
+        unlink($this->path);
     }
 
     public function testConfigIsReadIntoTheArray()
