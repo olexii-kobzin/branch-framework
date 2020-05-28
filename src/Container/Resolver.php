@@ -28,8 +28,6 @@ class Resolver implements ResolverInterface
 
         if ($this->definitionInfo->isClosureDefinition($definition)) {
             $resolved = call_user_func($definition, $this->app);
-        } elseif ($this->definitionInfo->isInstanceDefinition($definition)) {
-            $resolved = $definition;
         } elseif ($this->definitionInfo->isArrayObjectDefinition($definition)) {
             $resolved = $this->resolveObject($definition);
         } elseif ($this->definitionInfo->isStringObjectDefinition($definition)) {
@@ -80,8 +78,8 @@ class Resolver implements ResolverInterface
                 }
                 
                 $arguments[] = $this->app->get($type->getName());
-            } else {
-                throw new \LogicException("No type available for \"$name\" }");
+            } else if (!$parameter->isDefaultValueAvailable()){
+                throw new \LogicException("No type available for \"$name\"");
             }
         }
 
