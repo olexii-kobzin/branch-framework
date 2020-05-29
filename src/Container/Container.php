@@ -50,7 +50,8 @@ class Container implements ContainerInterface
 
     public function has($id)
     {
-        return $this->definitions->has($id);
+        return $this->definitions->has($id)
+            || $this->entriesResolved->has($id);
     }
 
     public function get($id)
@@ -59,31 +60,33 @@ class Container implements ContainerInterface
             throw new \OutOfBoundsException("Definition '$id' was not found");
         }
 
-        if ($this->isDefinitionIdResolvable($id) && !$this->hasResolved($id)) {
-            $resolved = $this->resolveDefinition($id, $this->definitions->get($id));
-
-            if (!$this->definitionInfo->isTransient($this->definitions->get($id))) {
-                $this->entriesResolved->set($id, $resolved);
-            }
+        if ($this->isResolved($id)) {
+            $resolved = $this->entriesResolved->get($id);
         } else {
-            $resolved = $this->isDefinitionIdResolvable($id)
-                ? $this->entriesResolved->get($id)
-                : $this->definitions->get($id);
+            $definition = $this->definitions->get($id);
+            $resolved = $this->isResolvableDefinition($id) 
+                ? $this->resolveDefinition($id, $definition)
+                : $definition;
+
+            if (!$this->definitionInfo->isTransient($definition)) {
+                $this->entriesResolved->set($id, $resolved);
+                $this->definitions->delete($id);
+            }
         }
 
         return $resolved;
     }
 
-    public function set(string $id, $definition, bool $replace = true): void
+    public function set(string $id, $definition, bool $replace = false): void
     {
         if (!$replace && $this->has($id)) {
-            throw new \OutOfBoundsException("Definition '$id' already present");
+            throw new \OutOfRangeException("Definition '$id' already present");
         }
 
         $this->definitions->set($id, $definition);
     }
 
-    public function setMultiple(array $definitions, bool $replace = true): void
+    public function setMultiple(array $definitions, bool $replace = false): void
     {
         foreach ($definitions as $id => $definition) {
             $this->set($id, $definition, $replace);
@@ -103,7 +106,7 @@ class Container implements ContainerInterface
         return $this->invoker->invoke($callable, $args);
     }
 
-    protected function hasResolved(string $id): bool
+    protected function isResolved(string $id): bool
     {
         return $this->entriesResolved->has($id);
     }
@@ -126,7 +129,7 @@ class Container implements ContainerInterface
         return $value;
     }
 
-    protected function isDefinitionIdResolvable($id)
+    protected function isResolvableDefinition($id)
     {
         return strpos($id, '.') === false;
     }

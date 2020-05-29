@@ -1,17 +1,21 @@
 <?php
 
 use Branch\App;
-use Branch\Interfaces\EnvInterface;
-use Branch\Interfaces\Routing\RouterInterface;
 
-if (!function_exists('app')) {
-    function app() {
+if (!function_exists('container')) {
+    function container() {
         return App::getInstance();
+    }
+}
+
+if (!function_exists('env')) {
+    function env() {
+        return container()->get('env');
     }
 }
 
 if (!function_exists('config')) {
     function config() {
-        return app()->get('config');
+        return container()->get('config');
     }
 }

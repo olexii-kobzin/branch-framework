@@ -1,7 +1,6 @@
 <?php
 declare(strict_types=1);
 
-use Branch\App;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Routing\RouteConfigBuilderInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
@@ -40,7 +39,7 @@ class RouterTest extends BaseTestCase
         ],
     ];
 
-    protected $appProphecy;
+    protected $containerProphecy;
 
     protected $invokerProphecy;
 
@@ -52,7 +51,7 @@ class RouterTest extends BaseTestCase
 
     protected function setUpRouter(string $path): RouterInterface
     {
-        $this->appProphecy = $this->prophesize(App::class)->willImplement(ContainerInterface::class);
+        $this->containerProphecy = $this->prophesize(ContainerInterface::class);
         $this->invokerProphecy = $this->prophesize(RouteInvokerInterface::class);
         $this->configBuilderProphecy = $this->prophesize(RouteConfigBuilderInterface::class);
         $this->requestProphecy = $this->prophesize(ServerRequestInterface::class);
@@ -65,12 +64,12 @@ class RouterTest extends BaseTestCase
             ->willReturn(true);
         $uriProphecy->getPath()->willReturn($path);
 
-        $this->appProphecy->set(Argument::type('string'), Argument::any());
-        $this->appProphecy->get('_branch.routing.routes')->willReturn(fn() => null);
+        $this->containerProphecy->set(Argument::type('string'), Argument::any());
+        $this->containerProphecy->get('_branch.routing.routes')->willReturn(fn() => null);
         $this->requestProphecy->getUri()->willReturn($uriProphecy->reveal());
 
         return new Router(
-            $this->appProphecy->reveal(),
+            $this->containerProphecy->reveal(),
             $this->invokerProphecy->reveal(),
             $this->configBuilderProphecy->reveal(),
             $this->requestProphecy->reveal(),
@@ -113,7 +112,7 @@ class RouterTest extends BaseTestCase
             ])
             ->shouldBeCalledTimes(1);
 
-        $this->appProphecy->invoke(Argument::type(\Closure::class))
+        $this->containerProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
 
@@ -144,7 +143,7 @@ class RouterTest extends BaseTestCase
             ])
             ->shouldBeCalledTimes(1);
 
-        $this->appProphecy->invoke(Argument::type(\Closure::class))
+        $this->containerProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
 
@@ -176,7 +175,7 @@ class RouterTest extends BaseTestCase
             ])
             ->shouldBeCalledTimes(1);
 
-        $this->appProphecy->invoke(Argument::type(\Closure::class))
+        $this->containerProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
 
@@ -208,7 +207,7 @@ class RouterTest extends BaseTestCase
             ])
             ->shouldBeCalledTimes(1);
 
-        $this->appProphecy->invoke(Argument::type(\Closure::class))
+        $this->containerProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
 
@@ -254,7 +253,7 @@ class RouterTest extends BaseTestCase
             ])
             ->shouldBeCalledTimes(1);
 
-        $this->appProphecy->invoke(Argument::type(\Closure::class))
+        $this->containerProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(
                 call_user_func($groupConfig, $router),
                 call_user_func($routeConfig, $router)

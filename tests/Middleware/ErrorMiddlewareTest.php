@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use Branch\App;
+use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\EnvInterface;
 use Branch\Middleware\ErrorMiddleware;
 use Branch\Tests\BaseTestCase;
@@ -27,18 +27,18 @@ class ErrorMiddlewareTest extends BaseTestCase
 
     public function buildMiddleware(string $env): MiddlewareInterface
     {
-        $appProphecy = $this->prophesize(App::class);
+        $containerProphecy = $this->prophesize(ContainerInterface::class);
         $this->streamProphecy = $this->prophesize(StreamInterface::class);
         $this->requestProphecy = $this->prophesize(ServerRequestInterface::class);
         $this->responseProphecy = $this->prophesize(ResponseInterface::class);
         $this->handlerProphecy = $this->prophesize(RequestHandlerInterface::class);
 
-        $appProphecy->get(Argument::exact('env'))
+        $containerProphecy->get(Argument::exact('env'))
             ->willReturn(['APP_ENV' => $env])
             ->shouldBeCalledTimes(1);
 
         return new ErrorMiddleware(
-            $appProphecy->reveal(),
+            $containerProphecy->reveal(),
             $this->responseProphecy->reveal()
         );
     }

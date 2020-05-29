@@ -5,6 +5,7 @@ namespace Branch;
 
 use Branch\Interfaces\Routing\RouterInterface;
 use Branch\Container\Container;
+use Branch\Interfaces\Container\ContainerInterface;
 
 class App extends Container
 {
@@ -27,7 +28,7 @@ class App extends Container
 
     public function init(array $config): void
     {
-        $this->set(self::class, $this);
+        $this->set(ContainerInterface::class, $this);
         $this->set('env', $config['env']);
         $this->set('config', call_user_func(
             $config['config'],

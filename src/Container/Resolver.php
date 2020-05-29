@@ -3,22 +3,22 @@ declare(strict_types=1);
 
 namespace Branch\Container;
 
-use Branch\App;
+use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Interfaces\Container\ResolverInterface;
 
 class Resolver implements ResolverInterface
 {
-    protected App $app;
+    protected ContainerInterface $container;
 
     protected DefinitionInfoInterface $definitionInfo;
 
     public function __construct(
-        App $app,
+        ContainerInterface $container,
         DefinitionInfoInterface $definitionInfo
     )
     {
-        $this->app = $app;
+        $this->container = $container;
         $this->definitionInfo = $definitionInfo;
     }
 
@@ -27,7 +27,7 @@ class Resolver implements ResolverInterface
         $resolved = null;
 
         if ($this->definitionInfo->isClosureDefinition($definition)) {
-            $resolved = call_user_func($definition, $this->app);
+            $resolved = call_user_func($definition, $this->container);
         } elseif ($this->definitionInfo->isArrayObjectDefinition($definition)) {
             $resolved = $this->resolveObject($definition);
         } elseif ($this->definitionInfo->isStringObjectDefinition($definition)) {
@@ -73,11 +73,11 @@ class Resolver implements ResolverInterface
             if ($type) {
                 $typeName = $type->getName();
 
-                if (!$this->app->has($typeName) && $parameter->isDefaultValueAvailable()) {
+                if (!$this->container->has($typeName) && $parameter->isDefaultValueAvailable()) {
                     continue;
                 }
                 
-                $arguments[] = $this->app->get($type->getName());
+                $arguments[] = $this->container->get($type->getName());
             } else if (!$parameter->isDefaultValueAvailable()){
                 throw new \LogicException("No type available for \"$name\"");
             }

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Branch\Routing;
 
-use Branch\App;
+use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Middleware\ActionInterface;
 use Branch\Interfaces\Middleware\CallbackActionInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
@@ -12,7 +12,7 @@ use Psr\Http\Message\ServerRequestInterface;
 
 class RouteInvoker implements RouteInvokerInterface
 {
-    protected App $app;
+    protected ContainerInterface $container;
 
     protected CallbackActionInterface $callbackAction;
 
@@ -27,17 +27,17 @@ class RouteInvoker implements RouteInvokerInterface
     protected array $middleware = [];
 
     public function __construct(
-        App $app,
+        ContainerInterface $container,
         CallbackActionInterface $callbackAction,
         ServerRequestInterface $request,
         MiddlewarePipeInterface $pipe
     )
     {
-        $this->app = $app;
+        $this->container = $container;
         $this->callbackAction = $callbackAction;
         $this->request = $request;
         $this->pipe = $pipe;
-        $this->defaultMiddleware = $this->app->get('_branch.routing.defaultMiddleware');
+        $this->defaultMiddleware = $this->container->get('_branch.routing.defaultMiddleware');
     }
 
     public function invoke(array $config, array $args): ResponseInterface
@@ -61,9 +61,9 @@ class RouteInvoker implements RouteInvokerInterface
     {
         foreach ($middleware as $key => $config) {
             if (is_integer($key)) {
-                $this->middleware[$config] = $this->app->make($config);
+                $this->middleware[$config] = $this->container->make($config);
             } else if (is_string($key)) {
-                $this->middleware[$key] = $this->app->make($key, $config);
+                $this->middleware[$key] = $this->container->make($key, $config);
             }
         }
     }
@@ -99,7 +99,7 @@ class RouteInvoker implements RouteInvokerInterface
 
     protected function buildAction(string $action): ActionInterface
     {
-        $action = $this->app->make($action);
+        $action = $this->container->make($action);
 
         return $action;
     }
