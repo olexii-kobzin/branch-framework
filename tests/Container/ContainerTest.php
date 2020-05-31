@@ -185,7 +185,7 @@ class ContainerTest extends BaseTestCase
 
         $this->container->set('test', [
             'class' => WithoutConstructor::class,
-            'type' => ContainerInterface::DI_TYPE_TRANSIENT,
+            'singleton' => false,
         ]);
 
         $this->assertInstanceOf(WithoutConstructor::class, $this->container->get('test'));

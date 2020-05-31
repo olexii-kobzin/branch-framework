@@ -11,8 +11,7 @@ class DefinitionInfo implements DefinitionInfoInterface
     public function isTransient($definition): bool
     {
         return $this->isArrayObjectDefinition($definition)
-            && isset($definition['type'])
-            && $definition['type'] === ContainerInterface::DI_TYPE_TRANSIENT;
+            && empty($definition['singleton']);
     }
 
     public function isArrayObjectDefinition($definition): bool

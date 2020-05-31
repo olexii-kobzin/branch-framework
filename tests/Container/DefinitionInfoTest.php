@@ -18,7 +18,7 @@ class DefinitionInfoTest extends BaseTestCase
     {
         $definition = [
             'class' => self::class,
-            'type' => ContainerInterface::DI_TYPE_TRANSIENT,
+            'singleton' => false,
         ];
 
         $this->assertTrue($this->definitionInfo->isTransient($definition));
@@ -28,7 +28,7 @@ class DefinitionInfoTest extends BaseTestCase
     {
         $definition = [
             'class' => self::class,
-            'type' => ContainerInterface::DI_TYPE_SINGLETON,
+            'singleton' => true,
         ];
 
         $this->assertFalse($this->definitionInfo->isTransient($definition));
