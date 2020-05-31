@@ -432,6 +432,32 @@ class RouterTest extends BaseTestCase
         );
     }
 
+    public function testExceptionIsThrownIfRouteParamsDoesNotMatch(): void
+    {
+        $router = $this->setUpRouter(self::$paths['routeWithParams']['requestedPath']);
+
+        $this->configBuilderProphecy->getRouteConfig(
+            Argument::type('array'),
+            Argument::type('array')
+        )
+            ->willReturn([
+                'path' => self::$paths['routeWithParams']['requestedPath'],
+                'pattern' => self::$paths['routeWithParams']['pattern'],
+                'name' =>  self::$paths['routeWithParams']['name']
+            ])
+            ->shouldBeCalledTimes(1);
+
+        $router->map([], [
+            'path' => self::$paths['routeWithParams']['path']
+        ], fn() => null);
+
+        $this->expectException(\UnexpectedValueException::class);
+
+        $router->getPathByName(self::$paths['routeWithParams']['name'], [
+            'param1' => 10,
+        ]);
+    }
+
     public function simpleRouteProvider(): array
     {
         return  [

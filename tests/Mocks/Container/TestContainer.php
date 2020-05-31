@@ -10,5 +10,18 @@ use Branch\Interfaces\Container\ResolverInterface;
 
 class TestContainer extends Container
 {
+    public function setResolver(ResolverInterface $resolver): void
+    {
+        $this->resolver = $resolver;
+    }
+
+    public function setInvoker(InvokerInterface $invoker): void
+    {
+        $this->invoker = $invoker;
+    }
     
+    public function setDefiniionInfo(DefinitionInfoInterface $definitionInfo): void
+    {
+        $this->definitionInfo = $definitionInfo;
+    }
 }

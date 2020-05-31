@@ -33,21 +33,6 @@ class Container implements ContainerInterface
         $this->invoker = new Invoker($this->resolver);
     }
 
-    public function setResolver(ResolverInterface $resolver): void
-    {
-        $this->resolver = $resolver;
-    }
-
-    public function setInvoker(InvokerInterface $invoker): void
-    {
-        $this->invoker = $invoker;
-    }
-    
-    public function setDefiniionInfo(DefinitionInfoInterface $definitionInfo): void
-    {
-        $this->definitionInfo = $definitionInfo;
-    }
-
     public function has($id)
     {
         return $this->definitions->has($id)
@@ -57,7 +42,7 @@ class Container implements ContainerInterface
     public function get($id)
     {
         if (!$this->has($id)) {
-            throw new \OutOfBoundsException("Definition '$id' was not found");
+            throw new \OutOfRangeException("Definition '$id' was not found");
         }
 
         if ($this->isResolved($id)) {
