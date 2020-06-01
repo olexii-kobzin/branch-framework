@@ -14,8 +14,8 @@ if (!function_exists('env')) {
     }
 }
 
-if (!function_exists('config')) {
-    function config() {
-        return container()->get('config');
+if (!function_exists('settings')) {
+    function settings() {
+        return container()->get('settings');
     }
 }

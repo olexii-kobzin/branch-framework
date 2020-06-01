@@ -30,15 +30,15 @@ class App extends Container
     {
         $this->set(ContainerInterface::class, $this);
         $this->set('env', $config['env']);
-        $this->set('config', call_user_func(
-            $config['config'],
+        $this->set('settings', call_user_func(
+            $config['settings'],
             $this->get('env')
         ));
         $this->setMultiple($config['di']);
         $this->set('_branch.routing.defaultMiddleware', call_user_func(
             $config['middleware'],
             $this->get('env'),
-            $this->get('config')
+            $this->get('settings')
         ));
         $this->set('_branch.routing.routes', $config['routes']);
 
