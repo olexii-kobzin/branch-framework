@@ -24,7 +24,7 @@ class MiddlewareHandler implements MiddlewareHandlerInterface
             return $this->fallbackHandler->handle($request);
         }
 
-        $middleware = \array_shift($this->pipe);
+        $middleware = array_shift($this->pipe);
         $handler = clone $this;
 
         return $middleware->process($request, $handler);

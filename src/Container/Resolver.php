@@ -64,7 +64,9 @@ class Resolver implements ResolverInterface
             $name = $parameter->getName();
 
             if (isset($predefined[$name])) {
-                $arguments[] = $predefined[$name];
+                $arguments[] = $this->definitionInfo->isStringObjectDefinition($predefined[$name])
+                    ? $this->container->get($predefined[$name])
+                    : $predefined[$name];
                 continue;
             }
 

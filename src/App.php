@@ -45,7 +45,7 @@ class App extends Container
         $router = $this->get(RouterInterface::class);
         
         if (!$router->init()) {
-            throw new \LogicException("Can't emit response");
+            throw new \Exception("Can't emit response");
         }
     
         require __DIR__ . '/helpers.php';
