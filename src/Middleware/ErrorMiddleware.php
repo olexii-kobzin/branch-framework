@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Middleware;
 
-use Branch\Interfaces\Container\ContainerInterface;
+use Branch\App;
 use Branch\Interfaces\EnvInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -20,11 +20,11 @@ class ErrorMiddleware implements MiddlewareInterface
     protected ResponseInterface $response;
 
     public function __construct(
-        ContainerInterface $container,
+        App $app,
         ResponseInterface $response
     )
     {
-        $this->env = $container->get('env');
+        $this->env = $app->get('env');
         $this->response = $response;
     }
 

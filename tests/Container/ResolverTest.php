@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 
+use Branch\App;
 use Branch\Container\Resolver;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
@@ -18,17 +19,17 @@ class ResolverTest extends BaseTestCase
 
     protected Resolver $resolver;
 
-    protected $containerProphecy;
+    protected $appProphecy;
 
     protected $definitionInfoProphecy;
 
     public function setUp(): void
     {
-        $this->containerProphecy = $this->prophesize(ContainerInterface::class);
+        $this->appProphecy = $this->prophesize(App::class)->willImplement(ContainerInterface::class);
         $this->definitionInfoProphecy = $this->prophesize(DefinitionInfoInterface::class);
 
         $this->resolver = new Resolver(
-            $this->containerProphecy->reveal(),
+            $this->appProphecy->reveal(),
             $this->definitionInfoProphecy->reveal()
         );
     
@@ -67,9 +68,9 @@ class ResolverTest extends BaseTestCase
             ->shouldBeCalledTimes(1);
         $this->definitionInfoProphecy->isStringObjectDefinition()
             ->shouldNotBeCalled();
-        $this->containerProphecy->has()
+        $this->appProphecy->has()
             ->shouldNotBeCalled();
-        $this->containerProphecy->get()
+        $this->appProphecy->get()
             ->shouldNotBeCalled();
 
         $definition = ['class' => WithoutConstructor::class];
@@ -96,9 +97,9 @@ class ResolverTest extends BaseTestCase
         )
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
-        $this->containerProphecy->has()
+        $this->appProphecy->has()
             ->shouldNotBeCalled();
-        $this->containerProphecy->get()
+        $this->appProphecy->get()
             ->shouldNotBeCalled();
 
         $definition = WithoutConstructor::class;
@@ -141,9 +142,11 @@ class ResolverTest extends BaseTestCase
 
     public function testObjectWithoutDefinedConstructorResolved(): void
     {
-        $this->containerProphecy->has()
+        $this->appProphecy->has()
             ->shouldNotBeCalled();
-        $this->containerProphecy->get()
+        $this->appProphecy->get()
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isStringObjectDefinition()
             ->shouldNotBeCalled();
 
         $result = $this->resolver->resolveObject([
@@ -155,9 +158,11 @@ class ResolverTest extends BaseTestCase
 
     public function testObjectResolved(): void
     {
-        $this->containerProphecy->has()
+        $this->appProphecy->has()
             ->shouldNotBeCalled();
-        $this->containerProphecy->get()
+        $this->appProphecy->get()
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isStringObjectDefinition()
             ->shouldNotBeCalled();
 
         $result = $this->resolver->resolveObject([
@@ -169,10 +174,20 @@ class ResolverTest extends BaseTestCase
 
     public function testObjectResolvedWithArgs(): void
     {
-        $this->containerProphecy->has()
+        $this->appProphecy->has()
             ->shouldNotBeCalled();
-        $this->containerProphecy->get()
+        $this->appProphecy->get()
             ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isStringObjectDefinition(
+            Argument::exact('hello world')
+        )
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isStringObjectDefinition(
+            Argument::exact(11)
+        )
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
 
         $result = $this->resolver->resolveObject([
             'class' => WithParams::class,
@@ -188,16 +203,16 @@ class ResolverTest extends BaseTestCase
 
     public function testArgsResolved(): void
     {
-        $this->containerProphecy->has(Argument::exact('string'))
+        $this->appProphecy->has(Argument::exact('string'))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
-        $this->containerProphecy->has(Argument::exact('int'))
+        $this->appProphecy->has(Argument::exact('int'))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->containerProphecy->get(Argument::exact('string'))
+        $this->appProphecy->get(Argument::exact('string'))
             ->willReturn('test')
             ->shouldBeCalledTimes(1);
-        $this->containerProphecy->get(Argument::exact('int'))
+        $this->appProphecy->get(Argument::exact('int'))
             ->shouldNotBeCalled();
         
         $reflection = new \ReflectionClass(WithParams::class);
@@ -211,16 +226,21 @@ class ResolverTest extends BaseTestCase
 
     public function testArgsResolvedWithPredefined(): void
     {
-        $this->containerProphecy->has(Argument::exact('string'))
+        $this->appProphecy->has(Argument::exact('string'))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
-        $this->containerProphecy->has(Argument::exact('int'))
+        $this->appProphecy->has(Argument::exact('int'))
             ->shouldNotBeCalled();
-        $this->containerProphecy->get(Argument::exact('string'))
+        $this->appProphecy->get(Argument::exact('string'))
             ->willReturn('test')
             ->shouldBeCalledTimes(1);
-        $this->containerProphecy->get(Argument::exact('int'))
+        $this->appProphecy->get(Argument::exact('int'))
             ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isStringObjectDefinition(
+            Argument::exact(11)
+        )
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
         
         $reflection = new \ReflectionClass(WithParams::class);
         $constructor = $reflection->getConstructor();
@@ -234,9 +254,9 @@ class ResolverTest extends BaseTestCase
 
     public function testArgsRrsolvedWithDefaults(): void
     {
-        $this->containerProphecy->has(Argument::any())
+        $this->appProphecy->has(Argument::any())
             ->shouldNotBeCalled();
-        $this->containerProphecy->get(Argument::any())
+        $this->appProphecy->get(Argument::any())
             ->shouldNotBeCalled();
         
         $reflection = new \ReflectionClass(WithParamsNoTypeDefault::class);
@@ -250,9 +270,9 @@ class ResolverTest extends BaseTestCase
 
     public function testErrorIsThrownIfTypeIsNotAvailable(): void
     {
-        $this->containerProphecy->has(Argument::any())
+        $this->appProphecy->has(Argument::any())
             ->shouldNotBeCalled();
-        $this->containerProphecy->get(Argument::any())
+        $this->appProphecy->get(Argument::any())
             ->shouldNotBeCalled();
         
         $reflection = new \ReflectionClass(WithParamsNoType::class);

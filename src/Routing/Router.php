@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Branch\Routing;
 
-use Branch\Interfaces\Container\ContainerInterface;
+use Branch\App;
 use Branch\Interfaces\Routing\RouteConfigBuilderInterface;
 use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Interfaces\Routing\RouterInterface;
@@ -13,9 +13,9 @@ use Psr\Http\Message\ResponseInterface;
 use Fig\Http\Message\RequestMethodInterface;
 use Fig\Http\Message\StatusCodeInterface;
 
-class Router implements RouterInterface, RequestMethodInterface, StatusCodeInterface
+class Router implements RouterInterface
 {
-    protected ContainerInterface $container;
+    protected App $app;
 
     protected RouteInvokerInterface $invoker;
 
@@ -29,14 +29,14 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected \Closure $routesConfig;
 
-    protected string $path;
+    protected string $target;
 
     protected array $groupStack = [];
 
     protected array $routes = [];
 
     public function __construct(
-        ContainerInterface $container,
+        App $app,
         RouteInvokerInterface $invoker,
         RouteConfigBuilderInterface $configBuilder,
         ServerRequestInterface $request,
@@ -44,19 +44,19 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
         EmitterInterface $emitter
     )
     {
-        $this->container = $container;
+        $this->app = $app;
         $this->invoker = $invoker;
         $this->configBuilder = $configBuilder;
         $this->request = $request;
         $this->response = $response;
         $this->emitter = $emitter;
-        $this->path = $this->request->getUri()->getPath();
-        $this->routesConfig = $this->container->get('_branch.routing.routes');
+        $this->target = $this->request->getUri()->getPath();
+        $this->routesConfig = $this->app->get('_branch.routing.routes');
     }
 
     public function init(): bool
     {
-        $this->container->invoke($this->routesConfig);
+        $this->app->invoke($this->routesConfig);
 
         [$route, $args] = $this->matchRoute();
         $this->updateActionConfigInfo($route);
@@ -72,39 +72,39 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
         $this->groupStack[] = $this->configBuilder->getGroupConfig($end, $config);
 
-        $this->container->invoke($handler);
+        $this->app->invoke($handler);
 
         array_pop($this->groupStack);
     }
 
     public function get(array $config, $handler): void
     {
-        $this->map([self::METHOD_GET], $config, $handler);
+        $this->map([RequestMethodInterface::METHOD_GET], $config, $handler);
     }
 
     public function post(array $config, $handler): void
     {
-        $this->map([self::METHOD_POST], $config, $handler);
+        $this->map([RequestMethodInterface::METHOD_POST], $config, $handler);
     }
 
     public function put(array $config, $handler): void
     {
-        $this->map([self::METHOD_PUT], $config, $handler);
+        $this->map([RequestMethodInterface::METHOD_PUT], $config, $handler);
     }
 
     public function patch(array $config, $handler): void
     {
-        $this->map([self::METHOD_PATCH], $config, $handler);
+        $this->map([RequestMethodInterface::METHOD_PATCH], $config, $handler);
     }
 
     public function delete(array $config, $handler): void
     {
-        $this->map([self::METHOD_DELETE], $config, $handler);
+        $this->map([RequestMethodInterface::METHOD_DELETE], $config, $handler);
     }
 
     public function options(array $config, $handler): void
     {
-        $this->map([self::METHOD_OPTIONS], $config, $handler);
+        $this->map([RequestMethodInterface::METHOD_OPTIONS], $config, $handler);
     }
 
     public function any(array $config, $handler): void
@@ -167,7 +167,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
     protected function updateActionConfigInfo($matchedRoute)
     {
-        $this->container->set('_branch.routing.action', array_filter(
+        $this->app->set('_branch.routing.action', array_filter(
             $matchedRoute, 
             fn($k): bool => !in_array($k, ['handler']),
             ARRAY_FILTER_USE_KEY
@@ -188,7 +188,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
         foreach ($this->routes as $route) {
             $matchedParams = [];
-            if (preg_match($route['pattern'], $this->path, $matchedParams)) {
+            if (preg_match($route['pattern'], $this->target, $matchedParams)) {
                 $match = $route; 
                 $args = $this->filterMatchedParams($matchedParams);
                 break;
@@ -197,7 +197,7 @@ class Router implements RouterInterface, RequestMethodInterface, StatusCodeInter
 
         if (!$match) {
             // TODO: Create Http exceptions
-            throw new \Exception("Route {$this->path} not found", 404);
+            throw new \Exception("Route {$this->target} not found", StatusCodeInterface::STATUS_NOT_FOUND);
         }
 
         return [$match, $args];

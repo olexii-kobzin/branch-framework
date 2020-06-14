@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-use Adbar\Dot;
+use Branch\Container\Container;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Interfaces\Container\InvokerInterface;
@@ -9,7 +9,6 @@ use Branch\Interfaces\Container\ResolverInterface;
 use Branch\Tests\BaseTestCase;
 use Branch\Tests\Mocks\Constructor\WithoutConstructor;
 use Branch\Tests\Mocks\Constructor\WithParams;
-use Branch\Tests\Mocks\Container\TestContainer;
 use Prophecy\Argument;
 use Prophecy\PhpUnit\ProphecyTrait;
 
@@ -17,7 +16,7 @@ class ContainerTest extends BaseTestCase
 {
     use ProphecyTrait;
 
-    protected TestContainer $container;
+    protected Container $container;
 
     protected $definitionInfoProphecy;
 
@@ -31,10 +30,37 @@ class ContainerTest extends BaseTestCase
         $this->resolverProphecy = $this->prophesize(ResolverInterface::class);
         $this->invokerProphecy = $this->prophesize(InvokerInterface::class);
 
-        $this->container = new TestContainer();
+        $this->container = new Container();
         $this->container->setDefiniionInfo($this->definitionInfoProphecy->reveal());
         $this->container->setResolver($this->resolverProphecy->reveal());
         $this->container->setInvoker($this->invokerProphecy->reveal());
+    }
+
+    public function testDefinitionInfoIsEmptyAfterCreation(): void
+    {
+        $container = new Container();
+
+        $definitionInfoReflection = $this->getPropertyReflection($container, 'definitionInfo');
+
+        $this->assertFalse($definitionInfoReflection->isInitialized($container));
+    }
+
+    public function testResolverIsEmptyAfterCreation(): void
+    {
+        $container = new Container();
+
+        $resolverReflection = $this->getPropertyReflection($container, 'resolver');
+        
+        $this->assertFalse($resolverReflection->isInitialized($container));
+    }
+
+    public function testInvokerIsEmptyAfterCreation(): void
+    {
+        $container = new Container();
+
+        $invokerReflection = $this->getPropertyReflection($container, 'invoker');
+
+        $this->assertFalse($invokerReflection->isInitialized($container));
     }
 
     public function testDefinitionsAreEmptyAfterCreration(): void

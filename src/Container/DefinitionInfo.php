@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Branch\Container;
 
-use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 
 class DefinitionInfo implements DefinitionInfoInterface

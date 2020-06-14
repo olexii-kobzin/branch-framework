@@ -27,10 +27,21 @@ class Container implements ContainerInterface
     {
         $this->definitions = new Dot();
         $this->entriesResolved = new Dot();
+    }
 
-        $this->definitionInfo = new DefinitionInfo();
-        $this->resolver = new Resolver($this, $this->definitionInfo);
-        $this->invoker = new Invoker($this->resolver);
+    public function setDefiniionInfo(DefinitionInfoInterface $definitionInfo): void
+    {
+        $this->definitionInfo = $definitionInfo;
+    }
+
+    public function setResolver(ResolverInterface $resolver): void
+    {
+        $this->resolver = $resolver;
+    }
+
+    public function setInvoker(InvokerInterface $invoker): void
+    {
+        $this->invoker = $invoker;
     }
 
     public function has($id)

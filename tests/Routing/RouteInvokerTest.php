@@ -1,11 +1,11 @@
 <?php
 declare(strict_types=1);
 
+use Branch\App;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Middleware\ActionInterface;
 use Branch\Interfaces\Middleware\CallbackActionInterface;
 use Branch\Interfaces\Middleware\MiddlewarePipeInterface;
-use Branch\Interfaces\Routing\RouteInvokerInterface;
 use Branch\Routing\RouteInvoker;
 use Branch\Tests\BaseTestCase;
 use Psr\Http\Message\ServerRequestInterface;
@@ -21,7 +21,7 @@ class RouteInvokerTest extends BaseTestCase
 
     protected RouteInvoker $invoker;
 
-    protected $containerProphecy;
+    protected $appProphecy;
 
     protected $callbackActionProphecy;
 
@@ -33,7 +33,7 @@ class RouteInvokerTest extends BaseTestCase
 
     public function setUp(): void
     {
-        $this->containerProphecy = $this->prophesize(ContainerInterface::class);
+        $this->appProphecy = $this->prophesize(App::class)->willImplement(ContainerInterface::class);
         $this->callbackActionProphecy = $this->prophesize(CallbackActionInterface::class)
             ->willImplement(ActionInterface::class);
         $this->requestProphecy = $this->prophesize(ServerRequestInterface::class);
@@ -42,7 +42,7 @@ class RouteInvokerTest extends BaseTestCase
 
         $responseProphecy = $this->prophesize(ResponseInterface::class);
 
-        $this->containerProphecy->get('_branch.routing.defaultMiddleware')
+        $this->appProphecy->get('_branch.routing.defaultMiddleware')
             ->willReturn([
                 'MiddlewareA',
                 'MiddlewareB',
@@ -54,7 +54,7 @@ class RouteInvokerTest extends BaseTestCase
         )->willReturn($responseProphecy->reveal());
 
         $this->invoker = new RouteInvoker(
-            $this->containerProphecy->reveal(),
+            $this->appProphecy->reveal(),
             $this->callbackActionProphecy->reveal(),
             $this->requestProphecy->reveal(),
             $this->pipeProphecy->reveal()
@@ -91,14 +91,14 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(2);
 
-        $this->containerProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
         ])))
             ->willReturn($this->middlewareProphecy->reveal())
             ->shouldBeCalledTimes(2);
 
-        $this->containerProphecy->make(Argument::exact('ActionA'))
+        $this->appProphecy->make(Argument::exact('ActionA'))
             ->willReturn($actionProphecy->reveal())
             ->shouldBeCalledTimes(1);
 
@@ -118,7 +118,7 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(2);
 
-        $this->containerProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
         ])))
@@ -143,14 +143,14 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldNotBeCalled();
 
-        $this->containerProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
         ])))
             ->willReturn($this->middlewareProphecy->reveal())
             ->shouldBeCalledTimes(2);
 
-        $this->containerProphecy->make(Argument::exact('ActionA'))
+        $this->appProphecy->make(Argument::exact('ActionA'))
             ->willReturn($actionProphecy->reveal())
             ->shouldNotBeCalled();
 
@@ -172,7 +172,7 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(4);
 
-        $this->containerProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
             'MiddlewareC',
@@ -180,7 +180,7 @@ class RouteInvokerTest extends BaseTestCase
         ])))->willReturn($this->middlewareProphecy->reveal())
             ->shouldBeCalledTimes(4);
 
-        $this->containerProphecy->make(Argument::exact('ActionA'))
+        $this->appProphecy->make(Argument::exact('ActionA'))
             ->willReturn($actionProphecy->reveal())
             ->shouldBeCalledTimes(1);
 
@@ -205,20 +205,20 @@ class RouteInvokerTest extends BaseTestCase
         $this->pipeProphecy->pipe(Argument::type(MiddlewareInterface::class))
             ->shouldBeCalledTimes(4);
 
-        $this->containerProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
+        $this->appProphecy->make(Argument::that(fn(string $argument): bool => in_array($argument, [
             'MiddlewareA',
             'MiddlewareB',
             'MiddlewareD',
         ])))->willReturn($this->middlewareProphecy->reveal())
             ->shouldBeCalledTimes(3);
 
-        $this->containerProphecy->make(
+        $this->appProphecy->make(
             Argument::exact('MiddlewareC'),
             Argument::size(2)
         )->willReturn($this->middlewareProphecy->reveal())
             ->shouldBeCalledTimes(1);
 
-        $this->containerProphecy->make(Argument::exact('ActionA'))
+        $this->appProphecy->make(Argument::exact('ActionA'))
             ->willReturn($actionProphecy->reveal())
             ->shouldBeCalledTimes(1);
 

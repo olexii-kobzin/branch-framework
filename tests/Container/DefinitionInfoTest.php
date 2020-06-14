@@ -2,7 +2,6 @@
 declare(strict_types=1);
 
 use Branch\Container\DefinitionInfo;
-use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Tests\BaseTestCase;
 
 class DefinitionInfoTest extends BaseTestCase
