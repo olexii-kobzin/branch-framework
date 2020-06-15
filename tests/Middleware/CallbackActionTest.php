@@ -27,7 +27,7 @@ class CallbackActionTest extends BaseTestCase
         $this->assertFalse($handlerReflection->isInitialized($this->callbackAction));
     }
 
-    public function testHandlerCouldBeSet(): void
+    public function testHandlerCanBeSet(): void
     {
         $handlerReflection = $this->getPropertyReflection($this->callbackAction, 'handler');
 

@@ -15,7 +15,7 @@ class Event implements EventInterface
 
     protected $payload;
 
-    public function __construct(string $name, ?object $target, $payload)
+    public function __construct(string $name, ?object $target = null, $payload = null)
     {
         $this->target = $target;
         $this->name = $name;

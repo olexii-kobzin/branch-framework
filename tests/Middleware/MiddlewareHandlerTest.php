@@ -35,7 +35,7 @@ class MiddlewareHandlerTest extends BaseTestCase
         $this->assertFalse($fallbackHandler->isInitialized($this->middlewareHandler));
     }
 
-    public function testPipeCouldBeSet(): void
+    public function testPipeCanBeSet(): void
     {
         $pipeReflection = $this->getPropertyReflection($this->middlewareHandler, 'pipe');
 
@@ -47,7 +47,7 @@ class MiddlewareHandlerTest extends BaseTestCase
         $this->assertCount(2, $pipeReflection->getValue($this->middlewareHandler));
     }
 
-    public function tesetFallbackHandlerCouldBeSet(): void
+    public function tesetFallbackHandlerCanBeSet(): void
     {
         $requestHandlerProphecy = $this->prophesize(RequestHandlerInterface::class);
 

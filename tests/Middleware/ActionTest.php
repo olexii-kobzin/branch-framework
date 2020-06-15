@@ -35,7 +35,7 @@ class ActionTest extends BaseTestCase
         $this->assertCount(0, $argsReflection->getValue($this->action));
     }
 
-    public function testArgsCouldBeSet(): void
+    public function testArgsCanBeSet(): void
     {
         $argsReflection = $this->getPropertyReflection($this->action, 'args');
 

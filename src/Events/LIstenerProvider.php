@@ -7,21 +7,23 @@ use Branch\Interfaces\Events\ListenerProviderInterface;
 
 class ListenerProvider implements ListenerProviderInterface
 {
+    protected const COUNTER_DEFAULT = PHP_INT_MAX;
+
     protected array $listeners = [];
 
     protected array $listenerLookup = [];
 
     public function getListenersForEvent(object $event): iterable
     {
+        $targetId = $event->getTarget() ? spl_object_hash($event->getTarget()) : '';
         $name = $event->getName();
-        $targetHash = $event->getTarget() ? spl_object_hash($event->getTarget()) : '';
 
-        if (empty($this->listenerLookup[$name][$targetHash])) {
+        if (empty($this->listenerLookup[$targetId][$name])) {
             return [];
         }
 
-        foreach ($this->listenerLookup[$name][$targetHash] as $listenerHash) {
-            yield $this->listeners[$name][$targetHash][$listenerHash];
+        foreach ($this->listenerLookup[$targetId][$name] as $listenerId) {
+            yield $this->listeners[$targetId][$name][$listenerId];
         }
     }
 
@@ -29,26 +31,26 @@ class ListenerProvider implements ListenerProviderInterface
     {
         $this->validatePriority($priority);
 
-        $targetHash = $target ? spl_object_hash($target) : '';
-        $listenerHash = microtime() . uniqid(true);
+        $targetId = $target ? spl_object_hash($target) : '';
+        $listenerId = microtime(true) . uniqid('', true);
 
-        $this->listeners[$name][$targetHash][$listenerHash] = $listener;
+        $this->listeners[$targetId][$name][$listenerId] = $listener;
 
-        $nextPriority = $this->getPriority($name, $targetHash, $priority);
-        $this->listenerLookup[$name][$targetHash][$nextPriority] = $listenerHash;
+        $nextPriority = $this->getPriority($targetId, $name, $priority);
+        $this->listenerLookup[$targetId][$name][$nextPriority] = $listenerId;
 
-        ksort($this->listenerLookup[$name][$targetHash], SORT_NUMERIC);
+        krsort($this->listenerLookup[$targetId][$name], SORT_NUMERIC);
     }
 
-    protected function getPriority(string $name, string $targetHash, int $priority): string
+    protected function getPriority(string $targetId, string $name, int $priority): string
     {
-        $counter = 1;
+        $counter = self::COUNTER_DEFAULT;
 
-        while (isset($this->listenerLookup[$name][$targetHash]["$priority.$counter"])) {
-            $counter++;
+        while (isset($this->listenerLookup[$targetId][$name]["$priority-$counter"])) {
+            $counter--;
         }
 
-        return "$priority.$counter";
+        return "$priority-$counter";
     }
 
     protected function validatePriority(int $priority): void

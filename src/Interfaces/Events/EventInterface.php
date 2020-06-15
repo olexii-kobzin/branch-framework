@@ -11,7 +11,7 @@ interface EventInterface extends StoppableEventInterface
 
     public function getTarget(): ?object;
 
-    public function getName(): string;
+    public function getName(): string;  
 
     public function getPayload();
 
