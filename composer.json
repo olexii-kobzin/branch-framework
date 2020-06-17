@@ -1,17 +1,17 @@
 {
-  "name": "tasmanangel/branch",
+  "name": "tasmanangel/branch-framework",
   "version": "0.0.1",
   "type": "package",
   "description": "Branch framework",
-  "keywords": ["branch"],
-  "homepage": "http://testhomepage.com",
+  "keywords": ["branch-framework"],
+  "homepage": "https://github.com/tasmanangel/branch-framework",
   "license": "GPLv3",
   "authors": [
       {
           "name": "Alex Kobzin",
           "email": "tasmanangel@gmail.com",
-          "homepage": "http://testhomepage.com",
-          "role": "Developer"
+          "homepage": "https://github.com/tasmanangel/branch-framework",
+          "role": "Creator"
       }
   ],
   "require": {
