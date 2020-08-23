@@ -42,11 +42,16 @@ class RouteInvokerTest extends BaseTestCase
 
         $responseProphecy = $this->prophesize(ResponseInterface::class);
 
-        $this->appProphecy->get('_branch.routing.defaultMiddleware')
-            ->willReturn([
+        $this->appProphecy->get(Argument::exact('middleware'), Argument::type('bool'))
+            ->willReturn(fn(array  $env, array $config): array =>
+            [
                 'MiddlewareA',
                 'MiddlewareB',
             ]);
+        $this->appProphecy->get(Argument::exact('env'))
+            ->willReturn([]);
+        $this->appProphecy->get(Argument::exact('settings'))
+            ->willReturn([]);
         $this->callbackActionProphecy->setArgs(Argument::type('array'));
         $this->pipeProphecy->process(
             Argument::type(ServerRequestInterface::class),
@@ -66,13 +71,6 @@ class RouteInvokerTest extends BaseTestCase
         $pathReflection = $this->getPropertyReflection($this->invoker, 'path');
 
         $this->assertFalse($pathReflection->isInitialized($this->invoker));
-    }
-
-    public function testDefaultMiddlewareIsFilled(): void
-    {   
-        $defaultMiddlewareReflection = $this->getPropertyReflection($this->invoker, 'defaultMiddleware');
-
-        $this->assertCount(2, $defaultMiddlewareReflection->getValue($this->invoker));
     }
 
     public function testMiddlewareIsEmptyAfterCreation(): void

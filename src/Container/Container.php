@@ -8,6 +8,9 @@ use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Interfaces\Container\InvokerInterface;
 use Branch\Interfaces\Container\ResolverInterface;
+use Branch\Container\DefinitionInfo;
+use Branch\Container\Invoker;
+use Branch\Container\Resolver;
 
 class Container implements ContainerInterface
 {
@@ -27,21 +30,10 @@ class Container implements ContainerInterface
     {
         $this->definitions = new Dot();
         $this->entriesResolved = new Dot();
-    }
 
-    public function setDefiniionInfo(DefinitionInfoInterface $definitionInfo): void
-    {
-        $this->definitionInfo = $definitionInfo;
-    }
-
-    public function setResolver(ResolverInterface $resolver): void
-    {
-        $this->resolver = $resolver;
-    }
-
-    public function setInvoker(InvokerInterface $invoker): void
-    {
-        $this->invoker = $invoker;
+        $this->definitionInfo = new DefinitionInfo();
+        $this->resolver = new Resolver($this, $this->definitionInfo);
+        $this->invoker = new Invoker($this->resolver);
     }
 
     public function has($id)
@@ -50,23 +42,26 @@ class Container implements ContainerInterface
             || $this->entriesResolved->has($id);
     }
 
-    public function get($id)
+    public function get($id, bool $resolve = true)
     {
         if (!$this->has($id)) {
-            throw new \OutOfRangeException("Definition '$id' was not found");
+            throw new \OutOfRangeException("Definition '{$id}' was not found");
+        }
+
+        if (!$resolve) {
+            return $this->definitions->get($id);
         }
 
         if ($this->isResolved($id)) {
             $resolved = $this->entriesResolved->get($id);
         } else {
             $definition = $this->definitions->get($id);
-            $resolved = $this->isResolvableDefinition($id) 
+            $resolved = $this->isResolvableDefinition($definition) 
                 ? $this->resolveDefinition($id, $definition)
                 : $definition;
 
             if (!$this->definitionInfo->isTransient($definition)) {
                 $this->entriesResolved->set($id, $resolved);
-                $this->definitions->delete($id);
             }
         }
 
@@ -76,7 +71,7 @@ class Container implements ContainerInterface
     public function set(string $id, $definition, bool $replace = false): void
     {
         if (!$replace && $this->has($id)) {
-            throw new \OutOfRangeException("Definition '$id' already present");
+            throw new \OutOfRangeException("Definition '{$id}' already present");
         }
 
         $this->definitions->set($id, $definition);
@@ -92,7 +87,7 @@ class Container implements ContainerInterface
     public function make(string $class, array $args = []): object
     {
         return $this->resolveDefinition($class, [
-            'class' => $class,
+            'definition' => $class,
             'args' => $args,
         ]);
     }
@@ -110,8 +105,7 @@ class Container implements ContainerInterface
     protected function resolveDefinition(string $id, $definition)
     {
         if (isset($this->entriesBeingResolved[$id])) {
-            // TODO: replace with specialized exception
-            throw new \Exception("Circular dependency detected while trying to resolve '$id'");
+            throw new \LogicException("Circular dependency detected while trying to resolve '{$id}'");
         }
 
         $this->entriesBeingResolved[$id] = true;
@@ -125,8 +119,11 @@ class Container implements ContainerInterface
         return $value;
     }
 
-    protected function isResolvableDefinition($id)
+    protected function isResolvableDefinition($definition)
     {
-        return strpos($id, '.') === false;
+        return $this->definitionInfo->isClass($definition)
+            || $this->definitionInfo->isClosure($definition)
+            || $this->definitionInfo->isInstance($definition)
+            || $this->definitionInfo->isResolvableArray($definition);
     }
 }

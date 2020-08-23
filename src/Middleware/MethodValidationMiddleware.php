@@ -22,7 +22,7 @@ class MethodValidationMiddleware implements MiddlewareInterface
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
         $requestMethod = $request->getMethod();
-        $actionMethods = $this->app->get('_branch.routing.action.methods');
+        $actionMethods = $this->app->get('routing.action.methods');
         
         if ($actionMethods && !in_array($requestMethod, $actionMethods)) {
             // TODO: add http exception

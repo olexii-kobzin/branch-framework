@@ -5,5 +5,5 @@ use Psr\Http\Message\ResponseInterface;
 
 interface RouteInvokerInterface
 {
-    public function invoke(array $config, array $args): ResponseInterface;
+    public function invoke(array $config, array $args = []): ResponseInterface;
 }

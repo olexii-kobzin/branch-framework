@@ -5,17 +5,21 @@ interface DefinitionInfoInterface
 {
     public function isTransient($definition): bool;
 
-    public function isArrayObjectDefinition($definition): bool;
+    public function isClass($definition): bool;
 
-    public function isStringObjectDefinition($definition): bool;
+    public function isArrayClass($definition): bool;
 
-    public function isInstanceDefinition($definition): bool;
+    public function isClosure($definition): bool;
 
-    public function isClosureDefinition($definition): bool;
+    public function isArrayClosure($definition): bool;
 
-    public function isArrayDefinition($definition): bool;
+    public function isInstance($definition): bool;
 
-    public function isScalarDefinition($definition): bool;
+    public function isArray($definition): bool;
 
-    public function isResourceDefinition($definition): bool;
+    public function isScalar($definition): bool;
+
+    public function isResource($definition): bool;
+
+    public function isResolvableArray($definition): bool;
 }

@@ -2,20 +2,16 @@
 
 use Branch\App;
 
-if (!function_exists('container')) {
+if (!function_exists('app')) {
     function container() {
         return App::getInstance();
     }
 }
 
 if (!function_exists('env')) {
-    function env() {
-        return container()->get('env');
-    }
-}
+    function env($key): ?string {
+        $env = container()->get('env');
 
-if (!function_exists('settings')) {
-    function settings() {
-        return container()->get('settings');
+        return isset($env['key']) ? $env['key'] : null;
     }
 }

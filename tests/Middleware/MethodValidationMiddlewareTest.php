@@ -41,7 +41,7 @@ class MethodValidationMiddlewareTest extends BaseTestCase
         $this->requestProphecy->getMethod()
             ->willReturn('GET')
             ->shouldBeCalledTimes(1);
-        $this->appProphecy->get(Argument::exact('_branch.routing.action.methods'))
+        $this->appProphecy->get(Argument::exact('routing.action.methods'))
             ->willReturn([])
             ->shouldBeCalledTimes(1);
         $this->handlerProphecy->handle(Argument::type(ServerRequestInterface::class))
@@ -61,7 +61,7 @@ class MethodValidationMiddlewareTest extends BaseTestCase
         $this->requestProphecy->getMethod()
             ->willReturn('PUT')
             ->shouldBeCalledTimes(1);
-        $this->appProphecy->get(Argument::exact('_branch.routing.action.methods'))
+        $this->appProphecy->get(Argument::exact('routing.action.methods'))
             ->willReturn(['POST', 'PUT'])
             ->shouldBeCalledTimes(1);
         $this->handlerProphecy->handle(Argument::type(ServerRequestInterface::class))
@@ -81,7 +81,7 @@ class MethodValidationMiddlewareTest extends BaseTestCase
         $this->requestProphecy->getMethod()
             ->willReturn('GET')
             ->shouldBeCalledTimes(1);
-        $this->appProphecy->get(Argument::exact('_branch.routing.action.methods'))
+        $this->appProphecy->get(Argument::exact('routing.action.methods'))
             ->willReturn(['POST', 'PUT'])
             ->shouldBeCalledTimes(1);
         $this->handlerProphecy->handle(Argument::type(ServerRequestInterface::class))

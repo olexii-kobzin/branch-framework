@@ -31,36 +31,13 @@ class ContainerTest extends BaseTestCase
         $this->invokerProphecy = $this->prophesize(InvokerInterface::class);
 
         $this->container = new Container();
-        $this->container->setDefiniionInfo($this->definitionInfoProphecy->reveal());
-        $this->container->setResolver($this->resolverProphecy->reveal());
-        $this->container->setInvoker($this->invokerProphecy->reveal());
-    }
 
-    public function testDefinitionInfoIsEmptyAfterCreation(): void
-    {
-        $container = new Container();
-
-        $definitionInfoReflection = $this->getPropertyReflection($container, 'definitionInfo');
-
-        $this->assertFalse($definitionInfoReflection->isInitialized($container));
-    }
-
-    public function testResolverIsEmptyAfterCreation(): void
-    {
-        $container = new Container();
-
-        $resolverReflection = $this->getPropertyReflection($container, 'resolver');
-        
-        $this->assertFalse($resolverReflection->isInitialized($container));
-    }
-
-    public function testInvokerIsEmptyAfterCreation(): void
-    {
-        $container = new Container();
-
-        $invokerReflection = $this->getPropertyReflection($container, 'invoker');
-
-        $this->assertFalse($invokerReflection->isInitialized($container));
+        $definitionInfoReflection = $this->getPropertyReflection($this->container, 'definitionInfo');
+        $definitionInfoReflection->setValue($this->container, $this->definitionInfoProphecy->reveal());
+        $resolverReflection = $this->getPropertyReflection($this->container, 'resolver');
+        $resolverReflection->setValue($this->container, $this->resolverProphecy->reveal());
+        $invokerReflection = $this->getPropertyReflection($this->container, 'invoker');
+        $invokerReflection->setValue($this->container, $this->invokerProphecy->reveal());
     }
 
     public function testDefinitionsAreEmptyAfterCreration(): void
@@ -170,12 +147,23 @@ class ContainerTest extends BaseTestCase
 
     public function testCanGetResolvedEntry(): void
     {
-        $this->definitionInfoProphecy->isTransient(Argument::any())
+        $this->definitionInfoProphecy->isTransient(Argument::exact(3))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->resolverProphecy->resolve(Argument::exact(3))
-            ->willReturn(3)
+        $this->definitionInfoProphecy->isClass(Argument::exact(3))
+            ->willReturn(false)
             ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClosure(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isInstance(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isResolvableArray(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->resolverProphecy->resolve(Argument::any())
+            ->shouldNotBeCalled();
 
         $this->container->set('test', 3);
 
@@ -183,11 +171,21 @@ class ContainerTest extends BaseTestCase
         $this->assertSame(3, $this->container->get('test'));
     }
 
-    public function testCanGetResolableResolvedEntry(): void
+    public function testCanGetResolvableResolvedEntry(): void
     {
-        $this->definitionInfoProphecy->isTransient(Argument::any())
+        $this->definitionInfoProphecy->isTransient(Argument::type(\Closure::class))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClass(Argument::type(\Closure::class))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClosure(Argument::type(\Closure::class))
+            ->willReturn(true)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isInstance(Argument::type(\Closure::class))
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isResolvableArray(Argument::type(\Closure::class))
+            ->shouldNotBeCalled();
         $this->resolverProphecy->resolve(Argument::type(\Closure::class))
             ->willReturn('test')
             ->shouldBeCalledTimes(1);
@@ -199,7 +197,19 @@ class ContainerTest extends BaseTestCase
 
     public function testCanGetTransientResolvedEntry(): void
     {
-        $this->definitionInfoProphecy->isTransient(Argument::any())
+        $this->definitionInfoProphecy->isTransient(Argument::type('array'))
+            ->willReturn(true)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClass(Argument::type('array'))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClosure(Argument::type('array'))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isInstance(Argument::type('array'))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isResolvableArray(Argument::type('array'))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
         $this->resolverProphecy->resolve(Argument::type('array'))
@@ -210,11 +220,35 @@ class ContainerTest extends BaseTestCase
         $entriesResolved = $entriesResolvedReflection->getValue($this->container);
 
         $this->container->set('test', [
-            'class' => WithoutConstructor::class,
+            'definition' => WithoutConstructor::class,
             'singleton' => false,
         ]);
 
         $this->assertInstanceOf(WithoutConstructor::class, $this->container->get('test'));
+        $this->assertEquals(0, $entriesResolved->count());
+    }
+
+    public function testCanForceNotResolveDefinition(): void
+    {
+        $this->definitionInfoProphecy->isTransient(Argument::any())
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isClass(Argument::any())
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isClosure(Argument::any())
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isInstance(Argument::any())
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isResolvableArray(Argument::any())
+            ->shouldNotBeCalled();
+        $this->resolverProphecy->resolve(Argument::any())
+            ->shouldNotBeCalled();
+
+        $entriesResolvedReflection = $this->getPropertyReflection($this->container, 'entriesResolved');
+        $entriesResolved = $entriesResolvedReflection->getValue($this->container);
+
+        $this->container->set('test', WithoutConstructor::class);
+
+        $this->assertEquals(WithoutConstructor::class, $this->container->get('test', false));
         $this->assertEquals(0, $entriesResolved->count());
     }
 
@@ -234,12 +268,23 @@ class ContainerTest extends BaseTestCase
 
     public function testCanFindResolvedEntry(): void
     {
-        $this->definitionInfoProphecy->isTransient(Argument::any())
+        $this->definitionInfoProphecy->isTransient(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClass(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClosure(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isInstance(Argument::exact(3))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isResolvableArray(Argument::exact(3))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
         $this->resolverProphecy->resolve(Argument::exact(3))
-            ->willReturn(3)
-            ->shouldBeCalledTimes(1);
+            ->shouldNotBeCalled();
 
         $this->container->set('test', 3);
         $this->container->get('test');
@@ -262,8 +307,8 @@ class ContainerTest extends BaseTestCase
     {
         $this->resolverProphecy->resolve(Argument::that(
             fn(array $argument): bool => 
-            !empty($argument['class'])
-            && $argument['class'] === WithParams::class
+            !empty($argument['definition'])
+            && $argument['definition'] === WithParams::class
             && !empty($argument['args']['string'])
             && $argument['args']['string'] === 'test'
         ))
@@ -298,7 +343,18 @@ class ContainerTest extends BaseTestCase
         $container = $this->container;
         $this->container->set(WithoutConstructor::class, new WithoutConstructor());
 
-        $this->definitionInfoProphecy->isTransient(Argument::any())
+        $this->definitionInfoProphecy->isTransient(Argument::type(WithoutConstructor::class))
+            ->shouldNotBeCalled();
+        $this->definitionInfoProphecy->isClass(Argument::type(WithoutConstructor::class))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClosure(Argument::type(WithoutConstructor::class))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isInstance(Argument::type(WithoutConstructor::class))
+            ->willReturn(true)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isResolvableArray(Argument::type(WithoutConstructor::class))
             ->shouldNotBeCalled();
         $this->resolverProphecy->resolve(Argument::type(WithoutConstructor::class))
             ->will(function() use ($container) {

@@ -27,8 +27,6 @@ class Router implements RouterInterface
 
     protected EmitterInterface $emitter;
 
-    protected \Closure $routesConfig;
-
     protected string $target;
 
     protected array $groupStack = [];
@@ -51,13 +49,14 @@ class Router implements RouterInterface
         $this->response = $response;
         $this->emitter = $emitter;
         $this->target = $this->request->getUri()->getPath();
-        $this->routesConfig = $this->app->get('_branch.routing.routes');
     }
 
     public function init(): bool
     {
-        $this->app->invoke($this->routesConfig);
-
+        foreach ($this->app->get('routes') as $routesConfig) {
+            $this->app->invoke($routesConfig);
+        }
+        
         [$route, $args] = $this->matchRoute();
         $this->updateActionConfigInfo($route);
 
@@ -167,7 +166,7 @@ class Router implements RouterInterface
 
     protected function updateActionConfigInfo($matchedRoute)
     {
-        $this->app->set('_branch.routing.action', array_filter(
+        $this->app->set('routing.action', array_filter(
             $matchedRoute, 
             fn($k): bool => !in_array($k, ['handler']),
             ARRAY_FILTER_USE_KEY

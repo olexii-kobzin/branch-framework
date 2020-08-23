@@ -6,6 +6,7 @@ use Branch\Container\Resolver;
 use Branch\Interfaces\Container\ContainerInterface;
 use Branch\Interfaces\Container\DefinitionInfoInterface;
 use Branch\Tests\BaseTestCase;
+use Branch\Tests\Mocks\Constructor\WithDependencies;
 use Branch\Tests\Mocks\Constructor\WithoutConstructor;
 use Branch\Tests\Mocks\Constructor\WithParams;
 use Branch\Tests\Mocks\Constructor\WithParamsNoType;
@@ -37,14 +38,12 @@ class ResolverTest extends BaseTestCase
 
     public function testClosureResolved(): void
     {
-        $this->definitionInfoProphecy->isClosureDefinition(
-            Argument::type(\Closure::class)
-        )
+        $this->definitionInfoProphecy->isClosure(Argument::type(\Closure::class))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayObjectDefinition()
+        $this->definitionInfoProphecy->isArrayClass()
             ->shouldNotBeCalled();
-        $this->definitionInfoProphecy->isStringObjectDefinition()
+        $this->definitionInfoProphecy->isClass()
             ->shouldNotBeCalled();
 
         $definition = fn(ContainerInterface $container): string => 'test string';
@@ -54,47 +53,61 @@ class ResolverTest extends BaseTestCase
         $this->assertSame('test string', $result);
     }
 
-    public function testArrayObjectResolved(): void
+    public function testClassWithDependenciesResolved(): void
     {
-        $this->definitionInfoProphecy->isClosureDefinition(
-            Argument::any()
-        )
+        $this->definitionInfoProphecy->isClosure(Argument::exact(WithDependencies::class))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayObjectDefinition(
-            Argument::type('array')
-        )
+        $this->definitionInfoProphecy->isArrayClass(Argument::exact(WithDependencies::class))
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClass(Argument::exact(WithDependencies::class))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isStringObjectDefinition()
+        $this->appProphecy->has(Argument::exact(WithoutConstructor::class))
+            ->willReturn(true)
+            ->shouldBeCalledTimes(1);
+        $this->appProphecy->get(Argument::exact(WithoutConstructor::class))
+            ->willReturn(new WithoutConstructor())
+            ->shouldBeCalledTimes(1);
+
+        $resolved = $this->resolver->resolve(WithDependencies::class);
+
+        $this->assertInstanceOf(WithDependencies::class, $resolved);
+        $this->assertInstanceOf(WithoutConstructor::class, $resolved->dependency);
+    }
+
+    public function testArrayClassResolved(): void
+    {
+        $this->definitionInfoProphecy->isClosure(Argument::any())
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isArrayClass(Argument::type('array'))
+            ->willReturn(true)
+            ->shouldBeCalledTimes(1);
+        $this->definitionInfoProphecy->isClass()
             ->shouldNotBeCalled();
         $this->appProphecy->has()
             ->shouldNotBeCalled();
         $this->appProphecy->get()
             ->shouldNotBeCalled();
 
-        $definition = ['class' => WithoutConstructor::class];
+        $definition = ['definition' => WithoutConstructor::class];
 
         $result = $this->resolver->resolve($definition);
 
         $this->assertInstanceOf(WithoutConstructor::class, $result);
     }
 
-    public function testStringObjectResolved(): void
+    public function testClassResolved(): void
     {
-        $this->definitionInfoProphecy->isClosureDefinition(
-            Argument::any()
-        )
+        $this->definitionInfoProphecy->isClosure(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayObjectDefinition(
-            Argument::any()
-        )
+        $this->definitionInfoProphecy->isArrayClass(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isStringObjectDefinition(
-            Argument::type('string')
-        )
+        $this->definitionInfoProphecy->isClass(Argument::type('string'))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
         $this->appProphecy->has()
@@ -109,21 +122,15 @@ class ResolverTest extends BaseTestCase
         $this->assertInstanceOf(WithoutConstructor::class, $result);
     }
 
-    public function testOtherDefinitionResolved(): void
+    public function testOtherDefinitionsResolved(): void
     {
-        $this->definitionInfoProphecy->isClosureDefinition(
-            Argument::any()
-        )
+        $this->definitionInfoProphecy->isClosure(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(3);
-        $this->definitionInfoProphecy->isArrayObjectDefinition(
-            Argument::any()
-        )
+        $this->definitionInfoProphecy->isArrayClass(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(3);
-        $this->definitionInfoProphecy->isStringObjectDefinition(
-            Argument::any()
-        )
+        $this->definitionInfoProphecy->isClass(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(3);
 
@@ -138,67 +145,6 @@ class ResolverTest extends BaseTestCase
         $this->assertSame('test string', $stringResult);
         $this->assertSame(3, $intResult);
         $this->assertSame(['test'], $arrayResult);
-    }
-
-    public function testObjectWithoutDefinedConstructorResolved(): void
-    {
-        $this->appProphecy->has()
-            ->shouldNotBeCalled();
-        $this->appProphecy->get()
-            ->shouldNotBeCalled();
-        $this->definitionInfoProphecy->isStringObjectDefinition()
-            ->shouldNotBeCalled();
-
-        $result = $this->resolver->resolveObject([
-            'class' => WithoutConstructor::class
-        ]);
-
-        $this->assertInstanceOf(WithoutConstructor::class, $result);
-    }
-
-    public function testObjectResolved(): void
-    {
-        $this->appProphecy->has()
-            ->shouldNotBeCalled();
-        $this->appProphecy->get()
-            ->shouldNotBeCalled();
-        $this->definitionInfoProphecy->isStringObjectDefinition()
-            ->shouldNotBeCalled();
-
-        $result = $this->resolver->resolveObject([
-            'class' => WithParamsNoTypeDefault::class
-        ]);
-
-        $this->assertInstanceOf(WithParamsNoTypeDefault::class, $result);
-    }
-
-    public function testObjectResolvedWithArgs(): void
-    {
-        $this->appProphecy->has()
-            ->shouldNotBeCalled();
-        $this->appProphecy->get()
-            ->shouldNotBeCalled();
-        $this->definitionInfoProphecy->isStringObjectDefinition(
-            Argument::exact('hello world')
-        )
-            ->willReturn(false)
-            ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isStringObjectDefinition(
-            Argument::exact(11)
-        )
-            ->willReturn(false)
-            ->shouldBeCalledTimes(1);
-
-        $result = $this->resolver->resolveObject([
-            'class' => WithParams::class,
-            'args' => [
-                'string' => 'hello world',
-                'int' => 11
-            ],
-        ]);
-
-        $this->assertSame('hello world', $result->string);
-        $this->assertSame(11, $result->int);
     }
 
     public function testArgsResolved(): void
@@ -236,9 +182,7 @@ class ResolverTest extends BaseTestCase
             ->shouldBeCalledTimes(1);
         $this->appProphecy->get(Argument::exact('int'))
             ->shouldNotBeCalled();
-        $this->definitionInfoProphecy->isStringObjectDefinition(
-            Argument::exact(11)
-        )
+        $this->definitionInfoProphecy->isClass(Argument::exact(11))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
         

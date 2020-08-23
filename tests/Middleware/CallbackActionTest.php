@@ -42,7 +42,7 @@ class CallbackActionTest extends BaseTestCase
         $responseProphecy = $this->prophesize(ResponseInterface::class);
 
         $callbackMock = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['__invoke'])
+            ->addMethods(['__invoke'])
             ->getMock();
 
         $callbackMock->expects($this->once())

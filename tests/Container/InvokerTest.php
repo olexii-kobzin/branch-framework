@@ -159,6 +159,6 @@ class InvokerTest extends BaseTestCase
 
         $this->expectException(\LogicException::class);
 
-        [$object, $reflection] = $callableResolverReflection->invokeArgs($this->invoker, ['is_array']);
+        $callableResolverReflection->invokeArgs($this->invoker, ['is_array']);
     }
 }

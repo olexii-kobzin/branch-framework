@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 use Branch\Container\DefinitionInfo;
 use Branch\Tests\BaseTestCase;
+use Branch\Tests\Mocks\Constructor\WithoutConstructor;
 
 class DefinitionInfoTest extends BaseTestCase
 {
@@ -13,111 +14,145 @@ class DefinitionInfoTest extends BaseTestCase
         $this->definitionInfo = new DefinitionInfo();
     }
 
-    public function testIsTransient(): void
+    public function testIsDefinitionTransient(): void
     {
         $definition = [
-            'class' => self::class,
+            'definition' => self::class,
             'singleton' => false,
         ];
 
         $this->assertTrue($this->definitionInfo->isTransient($definition));
     }
 
-    public function testIsNotTransient(): void
+    public function testDefinitionIsNotTransient(): void
     {
         $definition = [
-            'class' => self::class,
+            'definition' => self::class,
             'singleton' => true,
         ];
 
         $this->assertFalse($this->definitionInfo->isTransient($definition));
     }
 
-    public function testIsArrayObjectDefinition(): void
+    public function testIsArrayTransient(): void
     {
         $definition = [
-            'class' => self::class,
+            'testKey1' => 'testValue1',
         ];
 
-        $this->assertTrue($this->definitionInfo->isArrayObjectDefinition($definition));
+        $this->assertTrue($this->definitionInfo->isTransient($definition));
     }
 
-    public function testIsNotArrayObjectDefinition(): void
+    public function testClassIsNotTransient(): void
+    {
+        $this->assertFalse($this->definitionInfo->isTransient(self::class));
+    }
+
+    public function testIsScalarTransient(): void
+    {
+        $this->assertTrue($this->definitionInfo->isTransient('striing'));
+        $this->assertTrue($this->definitionInfo->isTransient(3));
+        $this->assertTrue($this->definitionInfo->isTransient(3.14));
+        $this->assertTrue($this->definitionInfo->isTransient(true));
+        $this->assertTrue($this->definitionInfo->isTransient(null));
+        $this->assertFalse($this->definitionInfo->isTransient(self::class));
+    }
+
+    public function testIsObjectTransient(): void
+    {
+        $this->assertTrue($this->definitionInfo->isTransient(new WithoutConstructor()));
+    }
+
+    public function testIsResourceTransient(): void
+    {
+        $this->assertTrue($this->definitionInfo->isTransient(tmpfile()));
+    }
+
+    public function testIsArrayClass(): void
+    {
+        $definition = [
+            'definition' => self::class,
+        ];
+
+        $this->assertTrue($this->definitionInfo->isArrayClass($definition));
+    }
+
+    public function testIsNotArrayClass(): void
     {
         $notArrayDefinition = self::class;
         $notStringDefinition = [
-            'class' => $this,
+            'definition' => $this,
         ];
         $notExistsDefinition = [
-            'class' => 'ClassDoesNotExists',
+            'definition' => 'ClassDoesNotExists',
         ];
 
-        $this->assertFalse($this->definitionInfo->isArrayObjectDefinition($notArrayDefinition));
-        $this->assertFalse($this->definitionInfo->isArrayObjectDefinition($notStringDefinition));
-        $this->assertFalse($this->definitionInfo->isArrayObjectDefinition($notExistsDefinition));
+        $this->assertFalse($this->definitionInfo->isArrayClass($notArrayDefinition));
+        $this->assertFalse($this->definitionInfo->isArrayClass($notStringDefinition));
+        $this->assertFalse($this->definitionInfo->isArrayClass($notExistsDefinition));
     }
 
-    public function testIsStringObjectDefinition(): void
+    public function testIsClass(): void
     {
         $definition = self::class;
 
-        $this->assertTrue($this->definitionInfo->isStringObjectDefinition($definition));
+        $this->assertTrue($this->definitionInfo->isClass($definition));
     }
 
-    public function testIsNotStringObjectDefinition(): void
+    public function testIsNotClass(): void
     {
         $notStringDefinition = $this;
         $notExistsDefinition = 'ClassDoesNotExists';
 
-        $this->assertFalse($this->definitionInfo->isStringObjectDefinition($notStringDefinition));
-        $this->assertFalse($this->definitionInfo->isStringObjectDefinition($notExistsDefinition));
+        $this->assertFalse($this->definitionInfo->isClass($notStringDefinition));
+        $this->assertFalse($this->definitionInfo->isClass($notExistsDefinition));
     }
 
-    public function testIsInstanceDefinition(): void
+    public function testIsInstance(): void
     {
         $definition = $this;
 
-        $this->assertTrue($this->definitionInfo->isInstanceDefinition($definition));
+        $this->assertTrue($this->definitionInfo->isInstance($definition));
     }
 
-    public function testIsNotInstanceDefinition(): void
+    public function testIsNotInstance(): void
     {
         $definition = self::class;
 
-        $this->assertFalse($this->definitionInfo->isInstanceDefinition($definition));
+        $this->assertFalse($this->definitionInfo->isInstance($definition));
     }
 
-    public function testIsArrayDefinition(): void
+    public function testIsArray(): void
     {
         $definition = [];
 
-        $this->assertTrue($this->definitionInfo->isArrayDefinition($definition));
+        $this->assertTrue($this->definitionInfo->isArray($definition));
     }
 
-    public function testIsClosureDefinition(): void
+    public function testIsClosure(): void
     {
         $definition = fn() => null;
 
-        $this->assertTrue($this->definitionInfo->isClosureDefinition($definition));
+        $this->assertTrue($this->definitionInfo->isClosure($definition));
     }
 
-    public function testIsNotClosureDefinition(): void
+    public function testIsNotClosure(): void
     {
         $notObjectDefinition = 0;
         $notClosureDefinition = $this;
 
-        $this->assertFalse($this->definitionInfo->isClosureDefinition($notObjectDefinition));
-        $this->assertFalse($this->definitionInfo->isClosureDefinition($notClosureDefinition));
+        $this->assertFalse($this->definitionInfo->isClosure($notObjectDefinition));
+        $this->assertFalse($this->definitionInfo->isClosure($notClosureDefinition));
     }
 
-    public function testIsNotArrayDefinition(): void
+    public function testIsNotArray(): void
     {
         $definition = 0;
 
-        $this->assertFalse($this->definitionInfo->isArrayDefinition($definition));
+        $this->assertFalse($this->definitionInfo->isArray($definition));
     }
 
-    public function testIsScalarDefinition(): void
+    public function testIsScalar(): void
     {
         $stringDefinition = '';
         $floatDefinition = 0.123;
@@ -125,37 +160,58 @@ class DefinitionInfoTest extends BaseTestCase
         $boolDefinition = true;
         $nullDefinition = null;
 
-        $this->assertTrue($this->definitionInfo->isScalarDefinition($stringDefinition));
-        $this->assertTrue($this->definitionInfo->isScalarDefinition($floatDefinition));
-        $this->assertTrue($this->definitionInfo->isScalarDefinition($integerDefinition));
-        $this->assertTrue($this->definitionInfo->isScalarDefinition($boolDefinition));
-        $this->assertTrue($this->definitionInfo->isScalarDefinition($nullDefinition));
+        $this->assertTrue($this->definitionInfo->isScalar($stringDefinition));
+        $this->assertTrue($this->definitionInfo->isScalar($floatDefinition));
+        $this->assertTrue($this->definitionInfo->isScalar($integerDefinition));
+        $this->assertTrue($this->definitionInfo->isScalar($boolDefinition));
+        $this->assertTrue($this->definitionInfo->isScalar($nullDefinition));
     }
 
-    public function testIsNotScalarDefinition(): void
+    public function testIsNotScalar(): void
     {
         $objectDefinition = $this;
         $arrayDefinition = [];
 
-        $this->assertFalse($this->definitionInfo->isScalarDefinition($objectDefinition));
-        $this->assertFalse($this->definitionInfo->isScalarDefinition($arrayDefinition));
+        $this->assertFalse($this->definitionInfo->isScalar($objectDefinition));
+        $this->assertFalse($this->definitionInfo->isScalar($arrayDefinition));
     }
 
-    public function testIsResrouceDefinition(): void
+    public function testIsResrouce(): void
     {
         $definition = tmpfile();
 
-        $this->assertTrue($this->definitionInfo->isResourceDefinition($definition));
+        $this->assertTrue($this->definitionInfo->isResource($definition));
     }
 
-    public function testIsNotResourceDefinition(): void
+    public function testIsNotResource(): void
     {
         $scalarDefinition = 0;
         $arrayDefinition = [];
         $objectDefinition = $this;
 
-        $this->assertFalse($this->definitionInfo->isResourceDefinition($scalarDefinition));
-        $this->assertFalse($this->definitionInfo->isResourceDefinition($arrayDefinition));
-        $this->assertFalse($this->definitionInfo->isResourceDefinition($objectDefinition));
+        $this->assertFalse($this->definitionInfo->isResource($scalarDefinition));
+        $this->assertFalse($this->definitionInfo->isResource($arrayDefinition));
+        $this->assertFalse($this->definitionInfo->isResource($objectDefinition));
+    }
+
+    public function testIsResolvableArray(): void
+    {
+        $definition = [
+            'definition' => WithoutConstructor::class,
+        ];
+
+        $this->assertTrue($this->definitionInfo->isResolvableArray($definition));
+    }
+
+    public function testIsNotResolvableArray(): void
+    {
+        $definition1 = 'test';
+
+        $definition2 = [
+            'testKey1' => 'testValue1',
+        ];
+
+        $this->assertFalse($this->definitionInfo->isResolvableArray($definition1));
+        $this->assertFalse($this->definitionInfo->isResolvableArray($definition2));
     }
 }

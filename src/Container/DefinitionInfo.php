@@ -9,41 +9,57 @@ class DefinitionInfo implements DefinitionInfoInterface
 {
     public function isTransient($definition): bool
     {
-        return $this->isArrayObjectDefinition($definition)
-            && empty($definition['singleton']);
+        return (
+                $this->isResolvableArray($definition)
+                && empty($definition['singleton'])
+            )
+            || (
+                !$this->isResolvableArray($definition)
+                && $this->isArray($definition)
+            )
+            || (
+                !$this->isClass($definition) 
+                && $this->isScalar($definition)
+            )
+            || $this->isInstance($definition)
+            || $this->isResource($definition);
     }
 
-    public function isArrayObjectDefinition($definition): bool
-    {
-        return is_array($definition)
-            && isset($definition['class'])
-            && is_string($definition['class']) 
-            && class_exists($definition['class']);
-    }
-
-    public function isStringObjectDefinition($definition): bool
+    public function isClass($definition): bool
     {
         return is_string($definition)
             && class_exists($definition);
     }
 
-    public function isInstanceDefinition($definition): bool
+    public function isArrayClass($definition): bool
+    {
+        return $this->isResolvableArray($definition)
+            && $this->isClass($definition['definition']);
+    }
+
+    public function isClosure($definition): bool
+    {
+        return $this->isInstance($definition)
+            && $definition instanceof \Closure;
+    }
+
+    public function isArrayClosure($definition): bool
+    {
+        return $this->isResolvableArray($definition)
+            && $this->isClosure($definition['definition']);
+    }
+
+    public function isInstance($definition): bool
     {
         return is_object($definition);
     }
 
-    public function isClosureDefinition($definition): bool
-    {
-        return $this->isInstanceDefinition($definition)
-            && $definition instanceof \Closure;
-    }
-
-    public function isArrayDefinition($definition): bool
+    public function isArray($definition): bool
     {
         return is_array($definition);
     }
 
-    public function isScalarDefinition($definition): bool
+    public function isScalar($definition): bool
     {
         return is_string($definition)
             || is_float($definition)
@@ -52,8 +68,14 @@ class DefinitionInfo implements DefinitionInfoInterface
             || is_null($definition);
     }
 
-    public function isResourceDefinition($definition): bool
+    public function isResource($definition): bool
     {
         return is_resource($definition);
+    }
+
+    public function isResolvableArray($definition): bool
+    {
+        return $this->isArray($definition)
+            && !empty($definition['definition']);
     }
 }

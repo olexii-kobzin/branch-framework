@@ -34,9 +34,7 @@ class EventDispatcherTest extends BaseTestCase
 
     public function testAnEventReturnedAfterDispatch(): void
     {
-        $this->providerProphecy->getListenersForEvent(
-            Argument::type(EventInterface::class)
-        )
+        $this->providerProphecy->getListenersForEvent(Argument::type(EventInterface::class))
             ->willReturn([])
             ->shouldBeCalledTimes(1);
 
@@ -48,16 +46,14 @@ class EventDispatcherTest extends BaseTestCase
     public function testListenersAreLoopedAndCalled(): void
     {
         $listenerMock = $this->getMockBuilder(\stdClass::class)
-            ->setMethods(['test'])
+            ->addMethods(['test'])
             ->getMock();
 
         $listenerMock->expects($this->exactly(2))
             ->method('test')
             ->with($this->isInstanceOf(EventInterface::class));
 
-        $this->providerProphecy->getListenersForEvent(
-            Argument::type(EventInterface::class)
-        )
+        $this->providerProphecy->getListenersForEvent(Argument::type(EventInterface::class))
             ->willReturn([
                 [$listenerMock, 'test'],
                 [$listenerMock, 'test']
@@ -77,9 +73,7 @@ class EventDispatcherTest extends BaseTestCase
             ->will(
                 function() { $this->isPropagationStopped()->willReturn(true); }
         );
-        $this->providerProphecy->getListenersForEvent(
-            Argument::type(EventInterface::class)
-        )
+        $this->providerProphecy->getListenersForEvent(Argument::type(EventInterface::class))
             ->willReturn([
                 function (EventInterface $event) use (&$eventPass1) {
                     $event->stopPropagation();

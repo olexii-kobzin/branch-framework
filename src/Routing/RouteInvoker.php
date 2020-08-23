@@ -22,8 +22,6 @@ class RouteInvoker implements RouteInvokerInterface
 
     protected string $path;
 
-    protected array $defaultMiddleware = [];
-
     protected array $middleware = [];
 
     public function __construct(
@@ -37,24 +35,30 @@ class RouteInvoker implements RouteInvokerInterface
         $this->callbackAction = $callbackAction;
         $this->request = $request;
         $this->pipe = $pipe;
-        $this->defaultMiddleware = $this->app->get('_branch.routing.defaultMiddleware');
     }
 
-    public function invoke(array $config, array $args): ResponseInterface
+    public function invoke(array $config, array $args = []): ResponseInterface
     {
         $this->path = $config['path'];
 
-        $this->buildMiddleware(array_merge(
-            $this->defaultMiddleware,
-            $config['middleware'] ?? []
-        ));
-
+        $this->initMiddleware(($config['middleware'] ?? []));
         $action = $this->buildHandler($config['handler']);
         $action->setArgs($args);
 
         $this->buildPipe();
 
         return $this->pipe->process($this->request, $action);
+    }
+
+    protected function initMiddleware(array $middleware): void
+    {
+        $defaultMiddleware = call_user_func(
+            $this->app->get('middleware', false),
+            $this->app->get('env'),
+            $this->app->get('settings')
+        );
+
+        $this->buildMiddleware(array_merge($defaultMiddleware, $middleware));
     }
 
     protected function buildMiddleware(array $middleware): void

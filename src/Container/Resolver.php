@@ -9,9 +9,9 @@ use Branch\Interfaces\Container\ResolverInterface;
 
 class Resolver implements ResolverInterface
 {
-    protected ContainerInterface $container;
+    private ContainerInterface $container;
 
-    protected DefinitionInfoInterface $definitionInfo;
+    private DefinitionInfoInterface $definitionInfo;
 
     public function __construct(
         ContainerInterface $container,
@@ -26,34 +26,17 @@ class Resolver implements ResolverInterface
     {
         $resolved = null;
 
-        if ($this->definitionInfo->isClosureDefinition($definition)) {
+        if ($this->definitionInfo->isClosure($definition)) {
             $resolved = call_user_func($definition, $this->container);
-        } elseif ($this->definitionInfo->isArrayObjectDefinition($definition)) {
-            $resolved = $this->resolveObject($definition);
-        } elseif ($this->definitionInfo->isStringObjectDefinition($definition)) {
-            $resolved = $this->resolveObject(['class' => $definition]);
+        } elseif ($this->definitionInfo->isArrayClass($definition)) {
+            $resolved = $this->resolveInternal($definition);
+        } elseif ($this->definitionInfo->isClass($definition)) {
+            $resolved = $this->resolveInternal(['definition' => $definition]);
         } else {
             $resolved = $definition;
         }
         
         return $resolved;
-    }
-
-    public function resolveObject(array $config): object
-    {
-        $reflectionClass = new \ReflectionClass($config['class']);
-        // TODO: check for fallback to parent constructor
-        $constructor = $reflectionClass->getConstructor();
-        if (!$constructor) {
-            return $reflectionClass->newInstance();
-        }
-
-        $arguments = $this->resolveArgs(
-            $constructor->getParameters(),
-            $config['args'] ?? []
-        );
-        
-        return $reflectionClass->newInstanceArgs($arguments);
     }
 
     public function resolveArgs(array $parameters, array $predefined = []): array
@@ -64,7 +47,7 @@ class Resolver implements ResolverInterface
             $name = $parameter->getName();
 
             if (isset($predefined[$name])) {
-                $arguments[] = $this->definitionInfo->isStringObjectDefinition($predefined[$name])
+                $arguments[] = $this->definitionInfo->isClass($predefined[$name])
                     ? $this->container->get($predefined[$name])
                     : $predefined[$name];
                 continue;
@@ -86,5 +69,22 @@ class Resolver implements ResolverInterface
         }
 
         return $arguments;
+    }
+
+    protected function resolveInternal(array $config): object
+    {
+        $reflectionClass = new \ReflectionClass($config['definition']);
+        // TODO: check for fallback to parent constructor
+        $constructor = $reflectionClass->getConstructor();
+        if (!$constructor) {
+            return $reflectionClass->newInstance();
+        }
+
+        $arguments = $this->resolveArgs(
+            $constructor->getParameters(),
+            $config['args'] ?? []
+        );
+        
+        return $reflectionClass->newInstanceArgs($arguments);
     }
 }

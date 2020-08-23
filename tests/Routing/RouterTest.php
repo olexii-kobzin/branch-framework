@@ -66,7 +66,6 @@ class RouterTest extends BaseTestCase
         $uriProphecy->getPath()->willReturn($path);
 
         $this->appProphecy->set(Argument::type('string'), Argument::any());
-        $this->appProphecy->get('_branch.routing.routes')->willReturn(fn() => null);
         $this->requestProphecy->getUri()->willReturn($uriProphecy->reveal());
 
         return new Router(
@@ -113,6 +112,8 @@ class RouterTest extends BaseTestCase
             ])
             ->shouldBeCalledTimes(1);
 
+        $this->appProphecy->get(Argument::exact('routes'))->willReturn([$config]);
+
         $this->appProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
@@ -147,6 +148,8 @@ class RouterTest extends BaseTestCase
         $this->appProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
+        
+        $this->appProphecy->get(Argument::exact('routes'))->willReturn([$config]);
 
         $this->invokerProphecy->invoke(
             Argument::type('array'),
@@ -180,6 +183,8 @@ class RouterTest extends BaseTestCase
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
 
+        $this->appProphecy->get(Argument::exact('routes'))->willReturn([$config]);
+
         $this->invokerProphecy->invoke(
             Argument::type('array'),
             Argument::type('array')
@@ -211,6 +216,8 @@ class RouterTest extends BaseTestCase
         $this->appProphecy->invoke(Argument::type(\Closure::class))
             ->willReturn(call_user_func($config, $router))
             ->shouldBeCalledTimes(1);
+
+        $this->appProphecy->get(Argument::exact('routes'))->willReturn([$config]);
 
         $this->invokerProphecy->invoke(
             Argument::type('array'),
@@ -261,6 +268,8 @@ class RouterTest extends BaseTestCase
             )
             ->shouldBeCalledTimes(2);
 
+        $this->appProphecy->get(Argument::exact('routes'))->willReturn([$groupConfig]);
+        
         $this->invokerProphecy->invoke(
             Argument::type('array'),
             Argument::type('array')
