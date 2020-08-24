@@ -41,7 +41,7 @@ class ResolverTest extends BaseTestCase
         $this->definitionInfoProphecy->isClosure(Argument::type(\Closure::class))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayClass()
+        $this->definitionInfoProphecy->isClassArray()
             ->shouldNotBeCalled();
         $this->definitionInfoProphecy->isClass()
             ->shouldNotBeCalled();
@@ -58,7 +58,7 @@ class ResolverTest extends BaseTestCase
         $this->definitionInfoProphecy->isClosure(Argument::exact(WithDependencies::class))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayClass(Argument::exact(WithDependencies::class))
+        $this->definitionInfoProphecy->isClassArray(Argument::exact(WithDependencies::class))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
         $this->definitionInfoProphecy->isClass(Argument::exact(WithDependencies::class))
@@ -82,7 +82,7 @@ class ResolverTest extends BaseTestCase
         $this->definitionInfoProphecy->isClosure(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayClass(Argument::type('array'))
+        $this->definitionInfoProphecy->isClassArray(Argument::type('array'))
             ->willReturn(true)
             ->shouldBeCalledTimes(1);
         $this->definitionInfoProphecy->isClass()
@@ -104,7 +104,7 @@ class ResolverTest extends BaseTestCase
         $this->definitionInfoProphecy->isClosure(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->definitionInfoProphecy->isArrayClass(Argument::any())
+        $this->definitionInfoProphecy->isClassArray(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
         $this->definitionInfoProphecy->isClass(Argument::type('string'))
@@ -127,7 +127,7 @@ class ResolverTest extends BaseTestCase
         $this->definitionInfoProphecy->isClosure(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(3);
-        $this->definitionInfoProphecy->isArrayClass(Argument::any())
+        $this->definitionInfoProphecy->isClassArray(Argument::any())
             ->willReturn(false)
             ->shouldBeCalledTimes(3);
         $this->definitionInfoProphecy->isClass(Argument::any())
@@ -150,72 +150,41 @@ class ResolverTest extends BaseTestCase
     public function testArgsResolved(): void
     {
         $this->appProphecy->has(Argument::exact('string'))
-            ->willReturn(true)
-            ->shouldBeCalledTimes(1);
+            ->shouldNotBeCalled();
         $this->appProphecy->has(Argument::exact('int'))
             ->willReturn(false)
             ->shouldBeCalledTimes(1);
-        $this->appProphecy->get(Argument::exact('string'))
-            ->willReturn('test')
-            ->shouldBeCalledTimes(1);
-        $this->appProphecy->get(Argument::exact('int'))
-            ->shouldNotBeCalled();
         
         $reflection = new \ReflectionClass(WithParams::class);
         $constructor = $reflection->getConstructor();
         $parameters = $constructor->getParameters();
 
-        $arguments = $this->resolver->resolveArgs($parameters);
+        $arguments = $this->resolver->resolveArgs($parameters, ['string' => 'test']);
 
-        $this->assertSame('test', $arguments[0]);
+        $this->assertSame(['test', 3], $arguments);
     }
 
     public function testArgsResolvedWithPredefined(): void
     {
         $this->appProphecy->has(Argument::exact('string'))
-            ->willReturn(true)
-            ->shouldBeCalledTimes(1);
+            ->shouldNotBeCalled();
         $this->appProphecy->has(Argument::exact('int'))
             ->shouldNotBeCalled();
-        $this->appProphecy->get(Argument::exact('string'))
-            ->willReturn('test')
-            ->shouldBeCalledTimes(1);
-        $this->appProphecy->get(Argument::exact('int'))
-            ->shouldNotBeCalled();
-        $this->definitionInfoProphecy->isClass(Argument::exact(11))
-            ->willReturn(false)
-            ->shouldBeCalledTimes(1);
         
         $reflection = new \ReflectionClass(WithParams::class);
         $constructor = $reflection->getConstructor();
         $parameters = $constructor->getParameters();
 
-        $arguments = $this->resolver->resolveArgs($parameters, ['int' => 11]);
+        $arguments = $this->resolver->resolveArgs($parameters, ['string' => 'test', 'int' => 11]);
 
-        $this->assertSame('test', $arguments[0]);
-        $this->assertSame(11, $arguments[1]);
-    }
-
-    public function testArgsRrsolvedWithDefaults(): void
-    {
-        $this->appProphecy->has(Argument::any())
-            ->shouldNotBeCalled();
-        $this->appProphecy->get(Argument::any())
-            ->shouldNotBeCalled();
-        
-        $reflection = new \ReflectionClass(WithParamsNoTypeDefault::class);
-        $constructor = $reflection->getConstructor();
-        $parameters = $constructor->getParameters();
-
-        $arguments = $this->resolver->resolveArgs($parameters);
-
-        $this->assertSame([], $arguments);
+        $this->assertSame(['test', 11], $arguments);
     }
 
     public function testErrorIsThrownIfTypeIsNotAvailable(): void
     {
         $this->appProphecy->has(Argument::any())
-            ->shouldNotBeCalled();
+            ->willReturn(false)
+            ->shouldBeCalledTimes(1);
         $this->appProphecy->get(Argument::any())
             ->shouldNotBeCalled();
         

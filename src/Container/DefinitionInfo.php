@@ -31,7 +31,7 @@ class DefinitionInfo implements DefinitionInfoInterface
             && class_exists($definition);
     }
 
-    public function isArrayClass($definition): bool
+    public function isClassArray($definition): bool
     {
         return $this->isResolvableArray($definition)
             && $this->isClass($definition['definition']);
@@ -43,7 +43,7 @@ class DefinitionInfo implements DefinitionInfoInterface
             && $definition instanceof \Closure;
     }
 
-    public function isArrayClosure($definition): bool
+    public function isClosureArray($definition): bool
     {
         return $this->isResolvableArray($definition)
             && $this->isClosure($definition['definition']);

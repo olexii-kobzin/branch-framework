@@ -28,7 +28,7 @@ class Resolver implements ResolverInterface
 
         if ($this->definitionInfo->isClosure($definition)) {
             $resolved = call_user_func($definition, $this->container);
-        } elseif ($this->definitionInfo->isArrayClass($definition)) {
+        } elseif ($this->definitionInfo->isClassArray($definition)) {
             $resolved = $this->resolveInternal($definition);
         } elseif ($this->definitionInfo->isClass($definition)) {
             $resolved = $this->resolveInternal(['definition' => $definition]);
@@ -45,26 +45,26 @@ class Resolver implements ResolverInterface
 
         foreach ($parameters as $parameter) {
             $name = $parameter->getName();
+            $type = $parameter->getType();
+            $typeName = $type ? $type->getName() : '';
 
             if (isset($predefined[$name])) {
-                $arguments[] = $this->definitionInfo->isClass($predefined[$name])
-                    ? $this->container->get($predefined[$name])
-                    : $predefined[$name];
+                $arguments[] = $predefined[$name];
                 continue;
             }
 
-            $type = $parameter->getType();
-
-            if ($type) {
-                $typeName = $type->getName();
-
-                if (!$this->container->has($typeName) && $parameter->isDefaultValueAvailable()) {
-                    continue;
-                }
-                
-                $arguments[] = $this->container->get($type->getName());
-            } else if (!$parameter->isDefaultValueAvailable()){
-                throw new \LogicException("No type available for \"$name\"");
+            if (
+                $this->container->has($typeName)
+                && (
+                    interface_exists($typeName) 
+                    || class_exists($typeName)
+                )
+            ) {
+                $arguments[] = $this->container->get($typeName);
+            } else if ($parameter->isDefaultValueAvailable()) {
+                $arguments[] = $parameter->getDefaultValue();
+            } else {
+                throw new \LogicException("Unable to resolve param \"{$name}\"");
             }
         }
 

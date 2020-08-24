@@ -7,11 +7,11 @@ interface DefinitionInfoInterface
 
     public function isClass($definition): bool;
 
-    public function isArrayClass($definition): bool;
+    public function isClassArray($definition): bool;
 
     public function isClosure($definition): bool;
 
-    public function isArrayClosure($definition): bool;
+    public function isClosureArray($definition): bool;
 
     public function isInstance($definition): bool;
 

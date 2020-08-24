@@ -58,7 +58,7 @@ class DefinitionInfoTest extends BaseTestCase
         $this->assertFalse($this->definitionInfo->isTransient(self::class));
     }
 
-    public function testIsObjectTransient(): void
+    public function testIsInstanceTransient(): void
     {
         $this->assertTrue($this->definitionInfo->isTransient(new WithoutConstructor()));
     }
@@ -67,31 +67,7 @@ class DefinitionInfoTest extends BaseTestCase
     {
         $this->assertTrue($this->definitionInfo->isTransient(tmpfile()));
     }
-
-    public function testIsArrayClass(): void
-    {
-        $definition = [
-            'definition' => self::class,
-        ];
-
-        $this->assertTrue($this->definitionInfo->isArrayClass($definition));
-    }
-
-    public function testIsNotArrayClass(): void
-    {
-        $notArrayDefinition = self::class;
-        $notStringDefinition = [
-            'definition' => $this,
-        ];
-        $notExistsDefinition = [
-            'definition' => 'ClassDoesNotExists',
-        ];
-
-        $this->assertFalse($this->definitionInfo->isArrayClass($notArrayDefinition));
-        $this->assertFalse($this->definitionInfo->isArrayClass($notStringDefinition));
-        $this->assertFalse($this->definitionInfo->isArrayClass($notExistsDefinition));
-    }
-
+    
     public function testIsClass(): void
     {
         $definition = self::class;
@@ -106,6 +82,66 @@ class DefinitionInfoTest extends BaseTestCase
 
         $this->assertFalse($this->definitionInfo->isClass($notStringDefinition));
         $this->assertFalse($this->definitionInfo->isClass($notExistsDefinition));
+    }
+
+    public function testIsClassArray(): void
+    {
+        $definition = [
+            'definition' => self::class,
+        ];
+
+        $this->assertTrue($this->definitionInfo->isClassArray($definition));
+    }
+
+    public function testIsNotClassArray(): void
+    {
+        $notArrayDefinition = self::class;
+        $notStringDefinition = [
+            'definition' => $this,
+        ];
+        $notExistsDefinition = [
+            'definition' => 'ClassDoesNotExists',
+        ];
+
+        $this->assertFalse($this->definitionInfo->isClassArray($notArrayDefinition));
+        $this->assertFalse($this->definitionInfo->isClassArray($notStringDefinition));
+        $this->assertFalse($this->definitionInfo->isClassArray($notExistsDefinition));
+    }
+
+    public function testIsClosure(): void
+    {
+        $definition = fn() => null;
+
+        $this->assertTrue($this->definitionInfo->isClosure($definition));
+    }
+
+    public function testIsNotClosure(): void
+    {
+        $notObjectDefinition = 0;
+        $notClosureDefinition = $this;
+
+        $this->assertFalse($this->definitionInfo->isClosure($notObjectDefinition));
+        $this->assertFalse($this->definitionInfo->isClosure($notClosureDefinition));
+    }
+
+    public function testIsClosureArray(): void
+    {
+        $definition = [
+            'definition' => fn() => 'test',
+        ];
+
+        $this->assertTrue($this->definitionInfo->isClosureArray($definition));
+    }
+
+    public function testIsNotClosureArray(): void
+    {
+        $notArrayDefinition = self::class;
+        $notClosureDefinition = [
+            'definition' => $this,
+        ];
+
+        $this->assertFalse($this->definitionInfo->isClosureArray($notArrayDefinition));
+        $this->assertFalse($this->definitionInfo->isClosureArray($notClosureDefinition));
     }
 
     public function testIsInstance(): void
@@ -127,22 +163,6 @@ class DefinitionInfoTest extends BaseTestCase
         $definition = [];
 
         $this->assertTrue($this->definitionInfo->isArray($definition));
-    }
-
-    public function testIsClosure(): void
-    {
-        $definition = fn() => null;
-
-        $this->assertTrue($this->definitionInfo->isClosure($definition));
-    }
-
-    public function testIsNotClosure(): void
-    {
-        $notObjectDefinition = 0;
-        $notClosureDefinition = $this;
-
-        $this->assertFalse($this->definitionInfo->isClosure($notObjectDefinition));
-        $this->assertFalse($this->definitionInfo->isClosure($notClosureDefinition));
     }
 
     public function testIsNotArray(): void
